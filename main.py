@@ -18,14 +18,18 @@ import shap
 print(f"Loading data from {DATA_DIR_HOUSE_A}")
 df = load_all_data(DATA_DIR_HOUSE_A)
 
+# GOOOD METHOD
 feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
-
 
 X = df[feature_columns]  # Use only sensor columns
 y = df["Activity_R2"]  # Predict activities for resident 1
 
-print(X.head())
-print(y.head())
+# CHEATING METHOD
+# feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS
+
+# y = df["Activity_R1"]
+# df.drop(["Activity_R1"], axis=1, inplace=True)
+# X = df
 
 # print("\nDataset information:")
 # print(f"Total number of samples: {len(df)}")
