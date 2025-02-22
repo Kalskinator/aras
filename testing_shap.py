@@ -37,14 +37,6 @@ model.fit(X_train, y_train)
 # Save the XGBoost model in binary format
 model.save_model("model.json")
 
-# Load the model from the saved binary file
-loaded_model = xgb.XGBRegressor()
-loaded_model.load_model("model.json")
-
-# SHAP Explainer
-explainer = shap.Explainer(loaded_model)
-shap_values = explainer(X_test)
-
 # Initialize the SHAP JavaScript library
 shap.initjs()
 

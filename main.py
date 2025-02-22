@@ -1,8 +1,11 @@
+from sklearn.ensemble import RandomForestClassifier
 from src.Data.data_loader import load_all_data
 from src.models.decision_tree import train_decision_tree, evaluate_model
 from src.config import SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS, DATA_DIR_HOUSE_A
 from pathlib import Path
 import shap
+import matplotlib.pyplot as plt
+import xgboost as xgb
 
 # Read the data
 # data_file = "House A/DAY_1.csv"  # Using House A data
@@ -37,15 +40,23 @@ y = df["Activity_R2"]  # Predict activities for resident 1
 # print("\nSamples per day:")
 # print(df.groupby("Day").size())
 
-
 # # Train and evaluate the model
 model, X_train, X_test, y_train, y_test = train_decision_tree(X, y)
 evaluate_model(model, X_test, y_test)
 
+model.fit(X_train, y_train)
 
-# shap.initjs()
+# Save the XGBoost model in binary format
+model.save_model("model.json")
+# Initialize the SHAP JavaScript library
+shap.initjs()
 
+# SHAP Explainer
+explainer = shap.TreeExplainer(model, X_train)
+shap_values = explainer(X_test)
 
-# explainer = shap.TreeExplainer(model, X_train)
-# shap_values = explainer(X_test)
-# shap.summary_plot(shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A, plot_type="bar")
+# Summary plot to visualize feature importance
+shap.summary_plot(shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A, plot_type="bar")
+
+# SHAP stacked force plot
+force_plot = shap.force_plot(explainer.expected_value, shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A)
