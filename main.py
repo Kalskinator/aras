@@ -70,7 +70,7 @@ loaded_model = joblib.load("model.joblib")
 print("Model loaded from 'model.joblib'")
 
 # Reduce the size of the test set for SHAP calculation
-X_test_sample = X_test.sample(n=100, random_state=42)
+X_test_sample = X_test.sample(n=1000, random_state=42)
 print(f"Reduced test set size: {X_test_sample.shape}")
 
 # SHAP Explainer
@@ -106,3 +106,21 @@ if shap_values is not None:
     plt.savefig('shap_summary_plot.png')  # Save the plot to a file
     print("SHAP summary plot saved as 'shap_summary_plot.png'")
     plt.show()
+
+
+
+#Once we find indentify the important sensor, we select them and train a new model on these sensors. 
+#Something like this:
+""" # Identify important sensors using SHAP summary plot
+important_sensors = ["Sensor1", "Sensor2", "Sensor3"]  # Replace with actual important sensors
+
+# Select necessary sensors
+X_important = X[important_sensors]
+
+# Train and evaluate the new model
+model_important, X_train_important, X_test_important, y_train_important, y_test_important = train_decision_tree(X_important, y)
+evaluate_model(model_important, X_test_important, y_test_important)
+
+# Save the new model using joblib
+joblib.dump(model_important, "model_important.joblib")
+print("Model with important sensors saved as 'model_important.joblib'") """
