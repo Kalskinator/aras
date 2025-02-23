@@ -6,6 +6,19 @@ from pathlib import Path
 import shap
 import matplotlib.pyplot as plt
 import joblib  # For saving and loading the model
+import signal  # For setting a timeout
+
+# Set Matplotlib backend
+import matplotlib
+matplotlib.use('Agg')
+
+# Function to handle timeout
+def handler(signum, frame):
+    raise TimeoutError("SHAP calculation timed out")
+
+# Set the timeout signal
+signal.signal(signal.SIGALRM, handler)
+signal.alarm(300)  # Set timeout to 300 seconds (5 minutes)
 
 # Read the data
 # data_file = "House A/DAY_1.csv"  # Using House A data
@@ -55,15 +68,28 @@ shap.initjs()
 loaded_model = joblib.load("model.joblib")
 print("Model loaded from 'model.joblib'")
 
+# Reduce the size of the test set for SHAP calculation
+X_test_sample = X_test.sample(n=100, random_state=42)
+print(f"Reduced test set size: {X_test_sample.shape}")
+
 # SHAP Explainer
-explainer = shap.TreeExplainer(model, X_train)
-shap_values = explainer(X_test)
+print("Initializing SHAP explainer")
+explainer = shap.TreeExplainer(loaded_model)
+print("Calculating SHAP values")
+try:
+    shap_values = explainer.shap_values(X_test_sample)
+    print("SHAP values calculated")
+except TimeoutError:
+    print("SHAP calculation timed out")
+    shap_values = None
 
-shap.summary_plot(shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A, plot_type="bar")
-plt.savefig('shap_summary_plot.png')  # Save the plot to a file
-print("SHAP summary plot saved as 'shap_summary_plot.png'")
+# Generate and save SHAP summary plot if shap_values is not None
+if shap_values is not None:
+    shap.summary_plot(shap_values, X_test_sample, feature_names=SENSOR_COLUMNS_HOUSE_A, plot_type="bar")
+    plt.savefig('shap_summary_plot.png')  # Save the plot to a file
+    print("SHAP summary plot saved as 'shap_summary_plot.png'")
 
-# SHAP stacked force plot
-force_plot = shap.force_plot(explainer.expected_value, shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A)
-shap.save_html('shap_force_plot.html', force_plot)  # Save the plot to an HTML file
-print("SHAP force plot saved as 'shap_force_plot.html'")
+    # SHAP stacked force plot
+    force_plot = shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample, feature_names=SENSOR_COLUMNS_HOUSE_A)
+    shap.save_html('shap_force_plot.html', force_plot)  # Save the plot to an HTML file
+    print("SHAP force plot saved as 'shap_force_plot.html'")
