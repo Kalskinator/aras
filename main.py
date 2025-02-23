@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 from src.Data.data_loader import load_all_data
 from src.models.decision_tree import train_decision_tree, evaluate_model
-from src.config import SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS, DATA_DIR_HOUSE_A
+from src.config import SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS, DATA_DIR_HOUSE_A, ACTIVITY_MAPPING
 from pathlib import Path
 import shap
 import matplotlib.pyplot as plt
@@ -70,7 +70,7 @@ loaded_model = joblib.load("model.joblib")
 print("Model loaded from 'model.joblib'")
 
 # Reduce the size of the test set for SHAP calculation
-X_test_sample = X_test.sample(n=1000, random_state=42)
+X_test_sample = X_test.sample(n=100, random_state=42)
 print(f"Reduced test set size: {X_test_sample.shape}")
 
 # SHAP Explainer
@@ -85,7 +85,7 @@ try:
 except TimeoutError:
     print("SHAP calculation timed out")
     shap_values = None
-
+""" 
 # Generate and display SHAP force plot if shap_values is not None
 if shap_values is not None:
     force_plot = shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
@@ -105,7 +105,54 @@ if shap_values is not None:
     shap.summary_plot(shap_values[1], X_test_sample, feature_names=feature_columns, plot_type="bar")
     plt.savefig('shap_summary_plot.png')  # Save the plot to a file
     print("SHAP summary plot saved as 'shap_summary_plot.png'")
-    plt.show()
+    plt.show() """
+
+# Function to generate SHAP summary plot for a specific activity
+def generate_shap_summary_for_activity(activity_id, X, y, model):
+    """
+    Generate SHAP summary plot for a specific activity.
+
+    Args:
+        activity_id (int): The activity ID to analyze.
+        X (pd.DataFrame): The feature data.
+        y (pd.Series): The target data.
+        model: The trained model.
+    """
+    activity = ACTIVITY_MAPPING[activity_id]
+    # Align indices of X and y
+    X, y = X.align(y, join='inner', axis=0)
+    
+    # Filter the data for the specific activity
+    activity_indices = y == activity_id
+    X_activity = X[activity_indices]
+    y_activity = y[activity_indices]
+
+    # Check if there are samples for the specific activity
+    if X_activity.empty:
+        print(f"No samples found for activity '{activity}'. Skipping SHAP summary plot.")
+        return
+
+    # Initialize SHAP explainer
+    explainer = shap.TreeExplainer(model)
+    shap_values_activity = explainer.shap_values(X_activity)
+
+    # Check if the model is multi-class
+    if isinstance(shap_values_activity, list):
+        shap_values_activity = shap_values_activity[1]  # Select the SHAP values for the specific class
+
+    # Generate SHAP summary plot
+    shap.summary_plot(shap_values_activity, X_activity, feature_names=X.columns, plot_type="bar")
+    plt.title(f"SHAP Summary Plot for Activity: {activity}")
+    plt.savefig(f'shap_summary_plot_{activity}.png')
+    print(f"SHAP summary plot for activity '{activity}' saved as 'shap_summary_plot_{activity}.png'")
+
+# Generate SHAP summary plots for all activities
+unique_activities = y_test.unique()
+for activity_id in unique_activities:
+    generate_shap_summary_for_activity(activity_id, X_test_sample, y_test, loaded_model)
+
+
+
 
 
 
