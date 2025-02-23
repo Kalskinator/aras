@@ -5,7 +5,7 @@ from src.config import SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS, DATA_DIR_HOUSE_
 from pathlib import Path
 import shap
 import matplotlib.pyplot as plt
-import xgboost as xgb
+import joblib  # For saving and loading the model
 
 # Read the data
 # data_file = "House A/DAY_1.csv"  # Using House A data
@@ -44,19 +44,26 @@ y = df["Activity_R2"]  # Predict activities for resident 1
 model, X_train, X_test, y_train, y_test = train_decision_tree(X, y)
 evaluate_model(model, X_test, y_test)
 
-model.fit(X_train, y_train)
+# Save the model using joblib
+joblib.dump(model, "model.joblib")
+print("Model saved as 'model.joblib'")
 
-# Save the XGBoost model in binary format
-model.save_model("model.json")
 # Initialize the SHAP JavaScript library
 shap.initjs()
+
+# Load the model from the saved file
+loaded_model = joblib.load("model.joblib")
+print("Model loaded from 'model.joblib'")
 
 # SHAP Explainer
 explainer = shap.TreeExplainer(model, X_train)
 shap_values = explainer(X_test)
 
-# Summary plot to visualize feature importance
 shap.summary_plot(shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A, plot_type="bar")
+plt.savefig('shap_summary_plot.png')  # Save the plot to a file
+print("SHAP summary plot saved as 'shap_summary_plot.png'")
 
 # SHAP stacked force plot
 force_plot = shap.force_plot(explainer.expected_value, shap_values, X_test, feature_names=SENSOR_COLUMNS_HOUSE_A)
+shap.save_html('shap_force_plot.html', force_plot)  # Save the plot to an HTML file
+print("SHAP force plot saved as 'shap_force_plot.html'")
