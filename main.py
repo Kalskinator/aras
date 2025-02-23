@@ -7,6 +7,7 @@ import shap
 import matplotlib.pyplot as plt
 import joblib  # For saving and loading the model
 import signal  # For setting a timeout
+import numpy as np  # For shape checking
 
 # Set Matplotlib backend
 import matplotlib
@@ -79,17 +80,29 @@ print("Calculating SHAP values")
 try:
     shap_values = explainer.shap_values(X_test_sample)
     print("SHAP values calculated")
+    print(f"Shape of SHAP values: {np.array(shap_values).shape}")
+    print(f"Shape of X_test_sample: {X_test_sample.shape}")
 except TimeoutError:
     print("SHAP calculation timed out")
     shap_values = None
 
-# Generate and save SHAP summary plot if shap_values is not None
+# Generate and display SHAP force plot if shap_values is not None
 if shap_values is not None:
-    shap.summary_plot(shap_values, X_test_sample, feature_names=SENSOR_COLUMNS_HOUSE_A, plot_type="bar")
-    plt.savefig('shap_summary_plot.png')  # Save the plot to a file
-    print("SHAP summary plot saved as 'shap_summary_plot.png'")
-
-    # SHAP stacked force plot
-    force_plot = shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample, feature_names=SENSOR_COLUMNS_HOUSE_A)
+    force_plot = shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
     shap.save_html('shap_force_plot.html', force_plot)  # Save the plot to an HTML file
     print("SHAP force plot saved as 'shap_force_plot.html'")
+    # Display the force plot in the notebook or web browser
+    shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
+
+
+## Not working yet 
+# Generate and display SHAP summary plot if shap_values is not None
+if shap_values is not None:
+    print(f"Number of features in X_test_sample: {X_test_sample.shape[1]}")
+    print(f"Number of features in shap_values: {len(shap_values[0])}")
+    #print(f"Shape of shap_values[0]: {np.array(shap_values[0]).shape}")
+    #print(f"Shape of shap_values[1]: {np.array(shap_values[1]).shape}")
+    shap.summary_plot(shap_values[1], X_test_sample, feature_names=feature_columns, plot_type="bar")
+    plt.savefig('shap_summary_plot.png')  # Save the plot to a file
+    print("SHAP summary plot saved as 'shap_summary_plot.png'")
+    plt.show()

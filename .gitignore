@@ -170,3 +170,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 model.joblib
+shap_force_plot.html
