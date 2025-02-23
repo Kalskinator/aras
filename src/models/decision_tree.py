@@ -36,12 +36,12 @@ def evaluate_model(model, X_test, y_test):
     print(cm)
 
     # Plot confusion matrix
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-    plt.title("Confusion Matrix")
-    plt.ylabel("True Label")
-    plt.xlabel("Predicted Label")
-    plt.show()
+    # plt.figure(figsize=(8, 6))
+    # sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+    # plt.title("Confusion Matrix")
+    # plt.ylabel("True Label")
+    # plt.xlabel("Predicted Label")
+    # plt.show()
 
     accuracy = model.score(X_test, y_test)
     print(f"\nModel Accuracy: {accuracy:.2f}")

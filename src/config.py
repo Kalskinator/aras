@@ -62,4 +62,3 @@ ACTIVITY_MAPPING = {
     26: "Having Guest",
     27: "Changing Clothes",
 }
-

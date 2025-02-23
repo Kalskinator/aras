@@ -1,5 +1,5 @@
 from sklearn.ensemble import RandomForestClassifier
-from src.Data.data_loader import load_all_data
+from src.Data.data_loader import load_all_data, load_day_data
 from src.models.decision_tree import train_decision_tree, evaluate_model
 from src.config import SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS, DATA_DIR_HOUSE_A, ACTIVITY_MAPPING
 from pathlib import Path
@@ -11,11 +11,21 @@ import numpy as np  # For shape checking
 
 # Set Matplotlib backend
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
+
+
+def get_activity_name(activity_id):
+    try:
+        return ACTIVITY_MAPPING[activity_id]
+    except KeyError:
+        return f"Unknown Activity ({activity_id})"
+
 
 # Function to handle timeout
 def handler(signum, frame):
     raise TimeoutError("SHAP calculation timed out")
+
 
 # Set the timeout signal
 signal.signal(signal.SIGALRM, handler)
@@ -39,7 +49,8 @@ df = load_all_data(DATA_DIR_HOUSE_A)
 feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
 
 X = df[feature_columns]  # Use only sensor columns
-y = df["Activity_R2"]  # Predict activities for resident 1
+y = df["Activity_R1"]  # Predict activities
+
 
 # CHEATING METHOD
 # feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS
@@ -71,41 +82,51 @@ print("Model loaded from 'model.joblib'")
 
 # Reduce the size of the test set for SHAP calculation
 X_test_sample = X_test.sample(n=100, random_state=42)
-print(f"Reduced test set size: {X_test_sample.shape}")
+# print(f"Reduced test set size: {X_test_sample.shape}")
 
 # SHAP Explainer
 print("Initializing SHAP explainer")
 explainer = shap.TreeExplainer(loaded_model)
 print("Calculating SHAP values")
 try:
-    shap_values = explainer.shap_values(X_test_sample)
+    shap_values = explainer(X_test_sample)
+    print(f"Shape of SHAP values: {shap_values.shape}")
     print("SHAP values calculated")
-    print(f"Shape of SHAP values: {np.array(shap_values).shape}")
-    print(f"Shape of X_test_sample: {X_test_sample.shape}")
+    # print(f"Shape of X_test_sample: {X_test_sample.shape}")
 except TimeoutError:
     print("SHAP calculation timed out")
     shap_values = None
-""" 
+
 # Generate and display SHAP force plot if shap_values is not None
 if shap_values is not None:
-    force_plot = shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
-    shap.save_html('shap_force_plot.html', force_plot)  # Save the plot to an HTML file
+    # force_plot = shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
+    # shap.save_html("shap_force_plot.html", force_plot)  # Save the plot to an HTML file
     print("SHAP force plot saved as 'shap_force_plot.html'")
     # Display the force plot in the notebook or web browser
-    shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
+    # shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
 
+    waterfall = shap.waterfall_plot(shap_values[0, :, 0])
 
-## Not working yet 
-# Generate and display SHAP summary plot if shap_values is not None
-if shap_values is not None:
-    print(f"Number of features in X_test_sample: {X_test_sample.shape[1]}")
-    print(f"Number of features in shap_values: {len(shap_values[0])}")
-    #print(f"Shape of shap_values[0]: {np.array(shap_values[0]).shape}")
-    #print(f"Shape of shap_values[1]: {np.array(shap_values[1]).shape}")
-    shap.summary_plot(shap_values[1], X_test_sample, feature_names=feature_columns, plot_type="bar")
-    plt.savefig('shap_summary_plot.png')  # Save the plot to a file
-    print("SHAP summary plot saved as 'shap_summary_plot.png'")
-    plt.show() """
+    activities = list(map(lambda x: ACTIVITY_MAPPING[x], loaded_model.classes_))
+    print(activities)
+    print("Classes:", loaded_model.classes_)
+    activity = get_activity_name(loaded_model.classes_[0])
+    print(f"Waterfall plot corresponds to class: {activity}")
+    plt.savefig("shap_waterfall_plot.png")
+    print("SHAP waterfall plot saved as 'shap_waterfall_plot.png'")
+
+# ## Not working yet
+# # Generate and display SHAP summary plot if shap_values is not None
+# if shap_values is not None:
+#     print(f"Number of features in X_test_sample: {X_test_sample.shape[1]}")
+#     print(f"Number of features in shap_values: {len(shap_values[0])}")
+#     #print(f"Shape of shap_values[0]: {np.array(shap_values[0]).shape}")
+#     #print(f"Shape of shap_values[1]: {np.array(shap_values[1]).shape}")
+#     shap.summary_plot(shap_values[1], X_test_sample, feature_names=feature_columns, plot_type="bar")
+#     plt.savefig('shap_summary_plot.png')  # Save the plot to a file
+#     print("SHAP summary plot saved as 'shap_summary_plot.png'")
+#     plt.show()
+
 
 # Function to generate SHAP summary plot for a specific activity
 def generate_shap_summary_for_activity(activity_id, X, y, model):
@@ -120,8 +141,8 @@ def generate_shap_summary_for_activity(activity_id, X, y, model):
     """
     activity = ACTIVITY_MAPPING[activity_id]
     # Align indices of X and y
-    X, y = X.align(y, join='inner', axis=0)
-    
+    X, y = X.align(y, join="inner", axis=0)
+
     # Filter the data for the specific activity
     activity_indices = y == activity_id
     X_activity = X[activity_indices]
@@ -138,36 +159,37 @@ def generate_shap_summary_for_activity(activity_id, X, y, model):
 
     # Check if the model is multi-class
     if isinstance(shap_values_activity, list):
-        shap_values_activity = shap_values_activity[1]  # Select the SHAP values for the specific class
+        shap_values_activity = shap_values_activity[
+            1
+        ]  # Select the SHAP values for the specific class
 
     # Generate SHAP summary plot
     shap.summary_plot(shap_values_activity, X_activity, feature_names=X.columns, plot_type="bar")
     plt.title(f"SHAP Summary Plot for Activity: {activity}")
-    plt.savefig(f'shap_summary_plot_{activity}.png')
-    print(f"SHAP summary plot for activity '{activity}' saved as 'shap_summary_plot_{activity}.png'")
+    plt.savefig(f"shap_summary_plot_{activity}.png")
+    print(
+        f"SHAP summary plot for activity '{activity}' saved as 'shap_summary_plot_{activity}.png'"
+    )
+
 
 # Generate SHAP summary plots for all activities
-unique_activities = y_test.unique()
-for activity_id in unique_activities:
-    generate_shap_summary_for_activity(activity_id, X_test_sample, y_test, loaded_model)
+# unique_activities = y_test.unique()
+# for activity_id in unique_activities:
+#     generate_shap_summary_for_activity(activity_id, X_test_sample, y_test, loaded_model)
 
 
+# Once we find indentify the important sensor, we select them and train a new model on these sensors.
+# Something like this:
+# # Identify important sensors using SHAP summary plot
+# important_sensors = ["Sensor1", "Sensor2", "Sensor3"]  # Replace with actual important sensors
 
+# # Select necessary sensors
+# X_important = X[important_sensors]
 
+# # Train and evaluate the new model
+# model_important, X_train_important, X_test_important, y_train_important, y_test_important = train_decision_tree(X_important, y)
+# evaluate_model(model_important, X_test_important, y_test_important)
 
-
-#Once we find indentify the important sensor, we select them and train a new model on these sensors. 
-#Something like this:
-""" # Identify important sensors using SHAP summary plot
-important_sensors = ["Sensor1", "Sensor2", "Sensor3"]  # Replace with actual important sensors
-
-# Select necessary sensors
-X_important = X[important_sensors]
-
-# Train and evaluate the new model
-model_important, X_train_important, X_test_important, y_train_important, y_test_important = train_decision_tree(X_important, y)
-evaluate_model(model_important, X_test_important, y_test_important)
-
-# Save the new model using joblib
-joblib.dump(model_important, "model_important.joblib")
-print("Model with important sensors saved as 'model_important.joblib'") """
+# # Save the new model using joblib
+# joblib.dump(model_important, "model_important.joblib")
+# print("Model with important sensors saved as 'model_important.joblib'")

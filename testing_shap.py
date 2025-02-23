@@ -48,5 +48,7 @@ loaded_model.load_model("model.json")
 explainer = shap.Explainer(loaded_model)
 shap_values = explainer(X_test)
 
+print(f"Shape of SHAP values: {shap_values.shape}")
+
 # Waterfall plot for the first observation
-shap.waterfall_plot(shap_values[0])
+# shap.waterfall_plot(shap_values[0])
