@@ -46,7 +46,8 @@ print(f"Loading data from {DATA_DIR_HOUSE_A}")
 df = load_all_data(DATA_DIR_HOUSE_A)
 
 # GOOOD METHOD
-feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
+# feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
+feature_columns = SENSOR_COLUMNS_HOUSE_A
 
 X = df[feature_columns]  # Use only sensor columns
 y = df["Activity_R1"]  # Predict activities
@@ -105,12 +106,14 @@ if shap_values is not None:
     # Display the force plot in the notebook or web browser
     # shap.force_plot(explainer.expected_value[1], shap_values[1], X_test_sample)
 
-    waterfall = shap.waterfall_plot(shap_values[0, :, 0])
+    class_index = 25
+
+    waterfall = shap.waterfall_plot(shap_values[0, :, class_index])
 
     activities = list(map(lambda x: ACTIVITY_MAPPING[x], loaded_model.classes_))
     print(activities)
     print("Classes:", loaded_model.classes_)
-    activity = get_activity_name(loaded_model.classes_[0])
+    activity = get_activity_name(loaded_model.classes_[class_index])
     print(f"Waterfall plot corresponds to class: {activity}")
     plt.savefig("shap_waterfall_plot.png")
     print("SHAP waterfall plot saved as 'shap_waterfall_plot.png'")
