@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 from scipy.stats import mode
 
 # --- Read Data and Create Datetime Index ---
-data_file = "House A/DAY_1.txt"
+data_file = "src/Data/House_A/DAY_1.txt"
 # Use sep='\s+' to handle whitespace-separated values
 df = pd.read_csv(data_file, sep="\s+", header=None)
 # Use 's' instead of 'S' for seconds
@@ -16,15 +17,18 @@ df.index = pd.date_range(start="2025-01-01", periods=len(df), freq="s")
 sensor_df = df.iloc[:, :20]
 activity_df = df.iloc[:, 20:22]
 
+
 # # --- Resample Data to 1-Minute Resolution ---
-# sensor_resampled = sensor_df.resample('min').mean()
+# sensor_resampled = sensor_df.resample("min").mean()
+
 
 # # Updated mode function to handle scalar vs array output
 # def mode_func(x):
 #     m = mode(x)
 #     return m.mode if np.isscalar(m.mode) else m.mode[0]
 
-# activity_resampled = activity_df.resample('min').agg(lambda x: mode_func(x))
+
+# activity_resampled = activity_df.resample("min").agg(lambda x: mode_func(x))
 
 # --- Define Sensor and Activity Labels ---
 sensor_labels = [
@@ -79,74 +83,126 @@ activity_mapping = {
     26: "Having Guest",
     27: "Changing Clothes",
 }
+sensor_labels_no_id = [
+    "Wardrobe",
+    "Convertible Couch",
+    "TV receiver",
+    "Couch",
+    "Couch",
+    "Chair",
+    "Chair",
+    "Fridge",
+    "Kitchen Drawer",
+    "Wardrobe",
+    "Bathroom Cabinet",
+    "House Door",
+    "Bathroom Door",
+    "Shower Cabinet Door",
+    "Hall",
+    "Kitchen",
+    "Tap",
+    "Water Closet",
+    "Kitchen",
+    "Bed",
+]
 
-# --- Create Visualization ---
-# fig, (ax1, ax2) = plt.subplots(
-#     2, 1, figsize=(16, 10), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
-# )
-
-
-# Sensor Heatmap: Transpose so each row corresponds to a sensor
-# sns.heatmap(sensor_df.T, cmap="viridis", ax=ax1, cbar_kws={"label": "Sensor Value"})
-# ax1.set_yticklabels(sensor_labels, rotation=0)
-# ax1.set_title("Sensor Readings (Aggregated by Minute)")
-
-# # Activity Timeline Plot: Prepare a 2xN array for Resident 1 and 2
-# activity_array = activity_resampled.to_numpy().T
-
-# # Create a categorical colormap with enough colors for 27 activities
-# cmap = plt.get_cmap('tab20', 28)  # 28 colors (one extra)
-# im = ax2.imshow(activity_array, aspect='auto', cmap=cmap, vmin=0.5, vmax=27.5)
-# ax2.set_yticks([0, 1])
-# ax2.set_yticklabels(['Resident 1', 'Resident 2'])
-# ax2.set_title('Activity Labels (Aggregated by Minute)')
-
-# # Set x-axis ticks as time labels every 2 hours
-# time_ticks = pd.date_range(start='2025-01-01', end='2025-01-02', freq='2H')
-# time_tick_positions = [(t - df.index[0]).total_seconds() / 60 for t in time_ticks]  # convert seconds to minutes
-# ax2.set_xticks(time_tick_positions)
-# ax2.set_xticklabels([t.strftime('%H:%M') for t in time_ticks])
-
-# # Add a horizontal colorbar with custom ticks/labels for activities
-# cbar = fig.colorbar(im, ax=ax2, orientation='horizontal', pad=0.2, ticks=range(1, 28))
-# cbar.ax.set_xticklabels([activity_mapping.get(i, str(i)) for i in range(1, 28)])
-# cbar.set_label('Activity Labels')
-
-
-# ... existing code ...
-
-# --- Calculate and Visualize Sensor Correlations ---
-plt.figure(figsize=(12, 10))
-
-# Calculate correlation matrix (using correlation instead of covariance for better interpretability)
-correlation_matrix = sensor_df.corr()
-
-# Create heatmap with sensor labels
-sns.heatmap(
-    correlation_matrix,
-    xticklabels=sensor_labels,
-    yticklabels=sensor_labels,
-    cmap="coolwarm",
-    center=0,
-    annot=True,  # Show correlation values
-    fmt=".2f",  # Round to 2 decimal places
-    square=True,
+fig, (ax1, ax2, ax3) = plt.subplots(
+    3, 1, figsize=(16, 12), gridspec_kw={"height_ratios": [4, 0.5, 0.5], "hspace": 0.5}, sharex=True
 )
 
-plt.title("Sensor Correlation Matrix")
-# Rotate x-axis labels for better readability
-plt.xticks(rotation=45, ha="right")
-plt.tight_layout()
+# Sensor Heatmap (ax1)
+sns.heatmap(sensor_df.T, cmap="viridis", ax=ax1, cbar=False)
+ax1.set_yticklabels(sensor_labels_no_id, rotation=0)
+
+# Format x-axis for sensor heatmap
+n_readings = len(sensor_df)
+increment = 3600
+tick_positions = np.arange(0, n_readings, increment)
+tick_labels = sensor_df.index[tick_positions].strftime("%H:%M")
+ax1.set_xticks(tick_positions)
+ax1.set_xticklabels(tick_labels, rotation=45, ha="right")
+ax1.set_title("Sensor Readings")
+ax1.tick_params(labelbottom=True)
+
+# Create a custom colormap with exactly one color per activity
+n_activities = 27
+colors = plt.cm.tab20(np.linspace(0, 1, 20))  # Get first 20 colors
+extra_colors = plt.cm.Set3(np.linspace(0, 1, 12))  # Get extra colors
+all_colors = np.vstack((colors, extra_colors))  # Combine the colors
+cmap = ListedColormap(all_colors[:n_activities])
+
+# Activity Timeline Plot - Resident 1 (ax2)
+im1 = ax2.imshow(
+    activity_df.iloc[:, 0:1].T, aspect="auto", cmap=cmap, vmin=1, vmax=n_activities + 1
+)
+ax2.set_yticks([0])
+ax2.set_yticklabels(["Resident 1"])
+ax2.set_xticks([])
+
+# Activity Timeline Plot - Resident 2 (ax3)
+im2 = ax3.imshow(
+    activity_df.iloc[:, 1:2].T, aspect="auto", cmap=cmap, vmin=1, vmax=n_activities + 1
+)
+ax3.set_yticks([0])
+ax3.set_yticklabels(["Resident 2"])
+ax3.set_xticks(tick_positions)
+ax3.set_xticklabels(tick_labels, rotation=45, ha="right")
+
+plt.subplots_adjust(bottom=0.4, hspace=0.5)
+
+cbar = fig.colorbar(
+    im1,
+    ax=[ax2, ax3],
+    orientation="horizontal",
+    pad=0.5,
+    ticks=np.arange(1.5, n_activities + 1),
+    aspect=40,
+)
+
+cbar.ax.set_xticklabels(
+    [activity_mapping.get(i, str(i)) for i in range(1, n_activities + 1)], rotation=45, ha="right"
+)
+cbar.set_label("Activity Labels")
+
+plt.savefig("sensor_activity_visualization.png", dpi=300, bbox_inches="tight")
 plt.show()
 
-# Print strongest correlations
-print("\nStrongest Sensor Relationships:")
-# Get upper triangle of correlation matrix
-upper_tri = correlation_matrix.where(np.triu(np.ones(correlation_matrix.shape), k=1).astype(bool))
-# Stack and sort correlations
-strong_correlations = upper_tri.unstack()
-strong_correlations = strong_correlations.sort_values(key=abs, ascending=False)
-# Print top 10 strongest correlations
-for idx, value in strong_correlations[:10].items():
-    if not np.isnan(value):  # Skip NaN values
-        print(f"{sensor_labels[idx[0]]} <-> {sensor_labels[idx[1]]}: {value:.3f}")
+
+# Remove tight_layout() as we're using subplots_adjust instead
+# plt.tight_layout()  # Remove this line
+
+# # --- Calculate and Visualize Sensor Correlations ---
+# plt.figure(figsize=(12, 10))
+
+# # Calculate correlation matrix (using correlation instead of covariance for better interpretability)
+# correlation_matrix = sensor_df.corr()
+
+# # Create heatmap with sensor labels
+# sns.heatmap(
+#     correlation_matrix,
+#     xticklabels=sensor_labels,
+#     yticklabels=sensor_labels,
+#     cmap="coolwarm",
+#     center=0,
+#     annot=True,  # Show correlation values
+#     fmt=".2f",  # Round to 2 decimal places
+#     square=True,
+# )
+
+# plt.title("Sensor Correlation Matrix")
+# # Rotate x-axis labels for better readability
+# plt.xticks(rotation=45, ha="right")
+# plt.tight_layout()
+# plt.show()
+
+# # Print strongest correlations
+# print("\nStrongest Sensor Relationships:")
+# # Get upper triangle of correlation matrix
+# upper_tri = correlation_matrix.where(np.triu(np.ones(correlation_matrix.shape), k=1).astype(bool))
+# # Stack and sort correlations
+# strong_correlations = upper_tri.unstack()
+# strong_correlations = strong_correlations.sort_values(key=abs, ascending=False)
+# # Print top 10 strongest correlations
+# for idx, value in strong_correlations[:10].items():
+#     if not np.isnan(value):  # Skip NaN values
+#         print(f"{sensor_labels[idx[0]]} <-> {sensor_labels[idx[1]]}: {value:.3f}")
