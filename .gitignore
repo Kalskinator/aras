@@ -171,3 +171,5 @@ cython_debug/
 .pypirc
 model.joblib
 shap_force_plot.html
+
+.DS_Store
