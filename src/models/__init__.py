@@ -2,13 +2,13 @@ from .tree_models import DecisionTreeModel, RandomForestModel
 
 # from .linear_models import LogisticRegressionModel, SVMModel
 # from .ensemble_models import XGBoostModel, LightGBMModel, CatBoostModel
-# from .neighbors_models import KNNModel
+from .neighbors_models import KNearestNeighborsModel
 
 # from .bayes_models import GaussianNBModel
 
 # Model registry
 MODEL_REGISTRY = {
-    # "knn": KNNModel,
+    "knn": KNearestNeighborsModel,
     "decision_tree": DecisionTreeModel,
     "random_forest": RandomForestModel,
     # "logistic_regression": LogisticRegressionModel,

@@ -43,6 +43,12 @@ def parse_arguments():
         help="Resident to analyze (R1 or R2)",
     )
 
+    parser.add_argument(
+        "--save_models",
+        action="store_true",
+        help="Save trained models to disk",
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -93,6 +99,14 @@ def main(args):
 
         # Store results
         results[model_name] = accuracy
+
+        if args.save_models:
+            # Create filename with resident info
+            artifacts_dir = os.path.join("artifacts", "models", f"{model_name}_{args.resident}")
+            os.makedirs(artifacts_dir, exist_ok=True)
+
+            # Save with resident info in path
+            model.save(artifacts_dir=artifacts_dir, accuracy=accuracy)
 
     # Print summary of results
     print(f"\n{'-'*40}\nResults summary\n{'-'*40}")
