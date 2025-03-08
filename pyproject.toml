@@ -18,7 +18,8 @@ dependencies = [
     "llvmlite (>=0.39.0)",
     "shap (>=0.41.0)",
     "xgboost (>=2.1.4,<3.0.0)",
-    "ipython (>=8.32.0,<9.0.0)"
+    "ipython (>=8.32.0,<9.0.0)",
+    "lightgbm (>=4.6.0,<5.0.0)"
 ]
 
 [tool.poetry]
