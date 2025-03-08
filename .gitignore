@@ -173,3 +173,5 @@ model.joblib
 shap_force_plot.html
 
 .DS_Store
+
+artifacts/
