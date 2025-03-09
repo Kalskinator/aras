@@ -21,6 +21,11 @@ def parse_arguments():
         default=["decision_tree"],
         choices=[
             "all",
+            "ensemble_models",
+            "bayes_models",
+            "linear_models",
+            "neighbors_models",
+            "tree_models",
             "knn",
             "decision_tree",
             "svm",
@@ -32,7 +37,7 @@ def parse_arguments():
             "xgboost",
             "gaussiannb",
         ],
-        help='One or more models to use (use "all" for all models)',
+        help='One or more models to use (use "all" for all models, or use model category like "ensemble_models", "linear_models", etc.)',
     )
 
     # Resident selection argument
@@ -53,7 +58,7 @@ def parse_arguments():
     # Parse arguments
     args = parser.parse_args()
 
-    # Handle 'all' option
+    # Handle model category options
     if "all" in args.models:
         args.models = [
             "decision_tree",
@@ -67,6 +72,42 @@ def parse_arguments():
             "xgboost",
             "gaussiannb",
         ]
+    else:
+        models = args.models.copy()
+        
+        for model in models:
+            if model == "ensemble_models":
+                args.models.extend([
+                    "lightgbm",
+                    "gradient_boosting",
+                    "catboost",
+                    "xgboost",
+                ])
+                args.models.remove("ensemble_models")
+            elif model == "bayes_models":
+                args.models.extend([
+                    "gaussiannb",
+                ])
+                args.models.remove("bayes_models")
+            elif model == "linear_models":
+                args.models.extend([
+                    "svm",
+                    "logistic_regression",
+                ])
+                args.models.remove("linear_models")
+            elif model == "neighbors_models":
+                args.models.extend([
+                    "knn",
+                ])
+                args.models.remove("neighbors_models")
+            elif model == "tree_models":
+                args.models.extend([
+                    "decision_tree",
+                    "random_forest",
+                ])
+                args.models.remove("tree_models")
+
+        args.models = list(dict.fromkeys(args.models))
 
     return args
 
@@ -76,8 +117,8 @@ def main(args):
     print(f"Selected resident: {args.resident}")
 
     print(f"Loading data from {DATA_DIR_HOUSE_A}")
-    df = load_all_data(DATA_DIR_HOUSE_A)
-    # df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt")
+    # df = load_all_data(DATA_DIR_HOUSE_A)
+    df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt")
 
     feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
     X = df[feature_columns]
@@ -120,12 +161,12 @@ def main(args):
 
     # Print summary of results
     print(f"\n{'-'*40}\nResults summary\n{'-'*40}")
-    for model_name, accuracy in sorted(results.items(), key=lambda x: x[1], reverse=True):
+    for model_name, metrics in sorted(results.items(), key=lambda x: x[1]['accuracy'], reverse=True):
         print(f"{model_name}:")
-        print(f"  Accuracy:  {accuracy['accuracy']:.4f}")
-        print(f"  Precision: {accuracy['precision']:.4f}")
-        print(f"  Recall:    {accuracy['recall']:.4f}")
-        print(f"  F-score:   {accuracy['fscore']:.4f}")
+        print(f"  Accuracy:  {metrics['accuracy']:.4f}")
+        print(f"  Precision: {metrics['precision']:.4f}")
+        print(f"  Recall:    {metrics['recall']:.4f}")
+        print(f"  F-score:   {metrics['fscore']:.4f}")
 
 
 if __name__ == "__main__":
