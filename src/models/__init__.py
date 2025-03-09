@@ -1,10 +1,8 @@
 from .tree_models import DecisionTreeModel, RandomForestModel
 from .linear_models import LogisticRegressionModel, SupportVectorMachineModel
-
-# from .ensemble_models import XGBoostModel, LightGBMModel, CatBoostModel
+from .ensemble_models import LightGBMModel, GradientBoostingModel, CatBoostModel, XGBoostModel
 from .neighbors_models import KNearestNeighborsModel
-
-# from .bayes_models import GaussianNBModel
+from .bayes_models import GaussianNBModel
 
 # Model registry
 MODEL_REGISTRY = {
@@ -13,11 +11,11 @@ MODEL_REGISTRY = {
     "decision_tree": DecisionTreeModel,
     "logistic_regression": LogisticRegressionModel,
     "random_forest": RandomForestModel,
-    # "xgboost": XGBoostModel,
-    # "lightgbm": LightGBMModel,
-    # "catboost": CatBoostModel,
-    # "gradient_boosting": GradientBoostingModel,
-    # "gaussiannb": GaussianNBModel,
+    "lightgbm": LightGBMModel,
+    "gradient_boosting": GradientBoostingModel,
+    "catboost": CatBoostModel,
+    "xgboost": XGBoostModel,
+    "gaussiannb": GaussianNBModel,
 }
 
 
