@@ -1,5 +1,5 @@
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.metrics import precision_recall_fscore_support as score
@@ -7,7 +7,7 @@ import time
 from .base_model import BaseModel
 import numpy as np
 
-
+# Maybe rename to SGDClassifierModel
 class SupportVectorMachineModel(BaseModel):
     def __init__(self, C=100, kernel="rbf", gamma=0.001):
         super().__init__("svm")
@@ -24,13 +24,21 @@ class SupportVectorMachineModel(BaseModel):
         )
         print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
 
-        self.model = SVC(
-            C=self.C,
-            # kernel=self.kernel,
-            gamma=self.gamma,
-            probability=True,
+        self.model = SGDClassifier(
+            # C=self.C,
+            # # kernel=self.kernel,
+            # gamma=self.gamma,
+            # # probability=True,
+            # random_state=random_state,
+            # verbose=True,
+            loss="hinge",
+            max_iter=1000,
+            verbose=1,
+            tol=1e-3,
             random_state=random_state,
-            verbose=True,
+            early_stopping=True,
+            validation_fraction=0.1,
+            n_iter_no_change=5
         )
         self.model.fit(X_train, y_train)
 
