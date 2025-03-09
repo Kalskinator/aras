@@ -1,6 +1,6 @@
 from .tree_models import DecisionTreeModel, RandomForestModel
+from .linear_models import LogisticRegressionModel, SupportVectorMachineModel
 
-# from .linear_models import LogisticRegressionModel, SVMModel
 # from .ensemble_models import XGBoostModel, LightGBMModel, CatBoostModel
 from .neighbors_models import KNearestNeighborsModel
 
@@ -9,10 +9,10 @@ from .neighbors_models import KNearestNeighborsModel
 # Model registry
 MODEL_REGISTRY = {
     "knn": KNearestNeighborsModel,
+    "svm": SupportVectorMachineModel,
     "decision_tree": DecisionTreeModel,
+    "logistic_regression": LogisticRegressionModel,
     "random_forest": RandomForestModel,
-    # "logistic_regression": LogisticRegressionModel,
-    # "svm": SVMModel,
     # "xgboost": XGBoostModel,
     # "lightgbm": LightGBMModel,
     # "catboost": CatBoostModel,
