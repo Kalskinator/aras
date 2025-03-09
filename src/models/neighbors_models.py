@@ -8,10 +8,11 @@ import numpy as np
 
 
 class KNearestNeighborsModel(BaseModel):
-    def __init__(self, n_neighbors=5, metric="manhattan"):
+    def __init__(self, n_neighbors=5, metric="manhattan", algorithm="auto"):
         super().__init__("knn")
         self.n_neighbors = n_neighbors
         self.metric = metric
+        self.algorithm = algorithm
 
     def train(self, X, y, test_size=0.3, random_state=42):
         print(f"Training KNN model with {self.n_neighbors} neighbors...")
@@ -23,7 +24,10 @@ class KNearestNeighborsModel(BaseModel):
         print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
 
         self.model = KNeighborsClassifier(
-            n_neighbors=self.n_neighbors, metric=self.metric, n_jobs=-1  # Use all available cores
+            n_neighbors=self.n_neighbors, 
+            # metric=self.metric,
+            algorithm=self.algorithm, 
+            n_jobs=-1  # Use all available cores
         )
         self.model.fit(X_train, y_train)
 
