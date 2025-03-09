@@ -4,6 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import argparse
+import numpy as np
 
 from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A
 from src.Data.data_loader import load_all_data, load_day_data
@@ -92,26 +93,39 @@ def main(args):
         model = get_model(model_name)
 
         # Train model
-        _, X_test, _, y_test = model.train(X, y)
+        X_train, X_test, y_train, y_test = model.train(X, y)
 
         # Evaluate model
-        accuracy = model.evaluate(X_test, y_test, print_report=False)
+        accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=False)
 
         # Store results
-        results[model_name] = accuracy
+        results[model_name] = {
+            "accuracy": accuracy,
+            "precision": np.mean(precision),
+            "recall": np.mean(recall),
+            "fscore": np.mean(fscore),
+        }
 
         if args.save_models:
-            # Create filename with resident info
             artifacts_dir = os.path.join("artifacts", "models", f"{model_name}_{args.resident}")
             os.makedirs(artifacts_dir, exist_ok=True)
 
-            # Save with resident info in path
-            model.save(artifacts_dir=artifacts_dir, accuracy=accuracy)
+            model.save(
+                artifacts_dir=artifacts_dir,
+                accuracy=results[model_name]["accuracy"],
+                precision=results[model_name]["precision"],
+                recall=results[model_name]["recall"],
+                fscore=results[model_name]["fscore"],
+            )
 
     # Print summary of results
     print(f"\n{'-'*40}\nResults summary\n{'-'*40}")
     for model_name, accuracy in sorted(results.items(), key=lambda x: x[1], reverse=True):
-        print(f"{model_name}: {accuracy:.4f}")
+        print(f"{model_name}:")
+        print(f"  Accuracy:  {accuracy['accuracy']:.4f}")
+        print(f"  Precision: {accuracy['precision']:.4f}")
+        print(f"  Recall:    {accuracy['recall']:.4f}")
+        print(f"  F-score:   {accuracy['fscore']:.4f}")
 
 
 if __name__ == "__main__":

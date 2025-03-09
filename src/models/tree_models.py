@@ -36,18 +36,13 @@ class DecisionTreeModel(BaseModel):
         accuracy = accuracy_score(y_test, y_pred)
         precision, recall, fscore, support = score(y_test, y_pred)
 
-        print(f"Decision Tree Accuracy: {accuracy:.4f}")
-        print(f"Precision: {np.mean(precision):.2f}")
-        print(f"Recall: {np.mean(recall):.2f}")
-        print(f"Fscore: {np.mean(fscore):.2f}")
-
         if print_report:
             print("\nClassification Report:")
             print(classification_report(y_test, y_pred))
             print("\nConfusion Matrix:")
             print(confusion_matrix(y_test, y_pred))
 
-        return accuracy
+        return accuracy, precision, recall, fscore
 
 
 class RandomForestModel(BaseModel):
@@ -87,15 +82,10 @@ class RandomForestModel(BaseModel):
         accuracy = accuracy_score(y_test, y_pred)
         precision, recall, fscore, support = score(y_test, y_pred)
 
-        print(f"Random Forest Accuracy: {accuracy:.4f}")
-        print(f"Precision: {np.mean(precision):.2f}")
-        print(f"Recall: {np.mean(recall):.2f}")
-        print(f"Fscore: {np.mean(fscore):.2f}")
-
         if print_report:
             print("\nClassification Report:")
             print(classification_report(y_test, y_pred))
             print("\nConfusion Matrix:")
             print(confusion_matrix(y_test, y_pred))
 
-        return accuracy
+        return accuracy, precision, recall, fscore

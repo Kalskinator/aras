@@ -18,7 +18,14 @@ class BaseModel(ABC):
     def evaluate(self, X_test, y_test, print_report=False):
         pass
 
-    def save(self, artifacts_dir="artifacts/models", accuracy=None):
+    def save(
+        self,
+        artifacts_dir="artifacts/models",
+        accuracy=None,
+        precision=None,
+        recall=None,
+        fscore=None,
+    ):
         """Save the trained model to disk"""
         if self.model is None:
             raise ValueError("Model not trained yet")
@@ -29,7 +36,9 @@ class BaseModel(ABC):
 
         # Create filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{self.name}_{timestamp}_ACCURACY_{accuracy:.2f}.pkl"
+        filename = (
+            f"AC_{accuracy:.2f}_PR_{precision:.2f}_RC_{recall:.2f}_F1_{fscore:.2f}_{timestamp}.pkl"
+        )
         filepath = os.path.join(artifacts_dir, filename)
 
         # Save the model
