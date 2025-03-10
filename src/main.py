@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A
+from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS
 from src.Data.data_loader import load_data_with_time_split, load_day_data, load_all_data
 from src.models import get_model
 from src.args import parse_arguments
@@ -13,8 +13,8 @@ from src.args import parse_arguments
 def prepare_data(resident):
     """Load and prepare data for training."""
     print(f"Loading data from {DATA_DIR_HOUSE_A}")
-    df = load_all_data(DATA_DIR_HOUSE_A)
-    # df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt")
+    df = load_all_data(DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS)
+    # df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt", SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS)
 
     other_resident = "R1" if resident == "R2" else "R2"
     feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A + [f"Activity_{other_resident}"]
