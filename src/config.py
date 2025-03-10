@@ -62,3 +62,11 @@ ACTIVITY_MAPPING = {
     26: "Having Guest",
     27: "Changing Clothes",
 }
+
+MODEL_CATEGORIES = {
+    "ensemble_models": ["lightgbm", "gradient_boosting", "catboost", "xgboost"],
+    "bayes_models": ["gaussiannb"],
+    "linear_models": ["svm", "logistic_regression"],
+    "neighbors_models": ["knn"],
+    "tree_models": ["decision_tree", "random_forest"],
+}

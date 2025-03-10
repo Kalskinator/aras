@@ -5,21 +5,14 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A
+from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A, MODEL_CATEGORIES
 from src.Data.data_loader import load_data_with_time_split, load_day_data, load_all_data
 from src.models import get_model, MODEL_REGISTRY
 
 
 def expand_model_categories(models):
     """Expand model category names into individual model names."""
-    model_categories = {
-        "ensemble_models": ["lightgbm", "gradient_boosting", "catboost", "xgboost"],
-        "bayes_models": ["gaussiannb"],
-        "linear_models": ["svm", "logistic_regression"],
-        "neighbors_models": ["knn"],
-        "tree_models": ["decision_tree", "random_forest"],
-    }
-
+    model_categories = MODEL_CATEGORIES
     expanded_models = []
     for model in models:
         if model in model_categories:
@@ -29,35 +22,23 @@ def expand_model_categories(models):
 
     return list(dict.fromkeys(expanded_models))
 
-def parse_arguments():
-    model_choices = [
-        "all",
-        "ensemble_models",
-        "bayes_models",
-        "linear_models",
-        "neighbors_models",
-        "tree_models",
-        "knn",
-        "decision_tree",
-        "svm",
-        "logistic_regression",
-        "random_forest",
-        "lightgbm",
-        "gradient_boosting",
-        "catboost",
-        "xgboost",
-        "gaussiannb",
-    ]
 
+def parse_arguments():
     model_help_text = (
-        'One or more models to use (use "all" for all models, or use model category like "ensemble_models", "linear_models", etc.).\n'
-        'Available choices:\n' + 
-        '\n'.join(f'  - {choice}' for choice in sorted(model_choices))
+        "Specify one or more models to use.\n"
+        'Use "all" for all models, or a category name:\n'
+        + "\n".join(f"  - {category}" for category in sorted(MODEL_CATEGORIES.keys()))
+        + "\n\nOr individual models:\n"
+        + "\n".join(
+            f"  - {model}"
+            for model in sorted(
+                set(model for models in MODEL_CATEGORIES.values() for model in models)
+            )
+        )
     )
 
     parser = argparse.ArgumentParser(
-        description="Activity prediction model",
-        formatter_class=argparse.RawTextHelpFormatter
+        description="Activity prediction model", formatter_class=argparse.RawTextHelpFormatter
     )
 
     # Model selection argument - allows multiple models
@@ -65,7 +46,7 @@ def parse_arguments():
         "--models",
         nargs="+",
         default=["decision_tree"],
-        choices=model_choices,
+        metavar="MODEL",
         help=model_help_text,
     )
 
@@ -89,18 +70,21 @@ def parse_arguments():
         "--train_days",
         type=int,
         default=7,
+        metavar="N",
         help="Number of days to use for training",
     )
     parser.add_argument(
         "--val_days",
         type=int,
         default=2,
+        metavar="N",
         help="Number of days to use for validation",
     )
     parser.add_argument(
         "--test_days",
         type=int,
         default=2,
+        metavar="N",
         help="Number of days to use for testing",
     )
 
@@ -113,21 +97,12 @@ def parse_arguments():
     # Parse arguments
     args = parser.parse_args()
 
-    if "all" in args.models:
-        args.models = [
-            "decision_tree",
-            "knn",
-            "svm",
-            "logistic_regression",
-            "random_forest",
-            "lightgbm",
-            "gradient_boosting",
-            "catboost",
-            "xgboost",
-            "gaussiannb",
-        ]
-    else:
-        args.models = expand_model_categories(args.models)
+    # Expand model categories to individual models
+    args.models = expand_model_categories(args.models)
+
+    # # Convert 'none' to None for feature selection
+    # if args.feature_selection == "none":
+    #     args.feature_selection = None
 
     return args
 
