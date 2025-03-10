@@ -1,14 +1,33 @@
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import argparse
 import numpy as np
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A
 from src.Data.data_loader import load_data_with_time_split, load_day_data, load_all_data
 from src.models import get_model, MODEL_REGISTRY
+
+
+def expand_model_categories(models):
+    """Expand model category names into individual model names."""
+    model_categories = {
+        "ensemble_models": ["lightgbm", "gradient_boosting", "catboost", "xgboost"],
+        "bayes_models": ["gaussiannb"],
+        "linear_models": ["svm", "logistic_regression"],
+        "neighbors_models": ["knn"],
+        "tree_models": ["decision_tree", "random_forest"],
+    }
+
+    expanded_models = []
+    for model in models:
+        if model in model_categories:
+            expanded_models.extend(model_categories[model])
+        else:
+            expanded_models.append(model)
+
+    return list(dict.fromkeys(expanded_models))
 
 
 def parse_arguments():
@@ -75,10 +94,15 @@ def parse_arguments():
         help="Number of days to use for testing",
     )
 
+    parser.add_argument(
+        "--print_report",
+        action="store_true",
+        help="Print the classification report",
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
-    # Handle model category options
     if "all" in args.models:
         args.models = [
             "decision_tree",
@@ -93,112 +117,68 @@ def parse_arguments():
             "gaussiannb",
         ]
     else:
-        models = args.models.copy()
-
-        for model in models:
-            if model == "ensemble_models":
-                args.models.extend(
-                    [
-                        "lightgbm",
-                        "gradient_boosting",
-                        "catboost",
-                        "xgboost",
-                    ]
-                )
-                args.models.remove("ensemble_models")
-            elif model == "bayes_models":
-                args.models.extend(
-                    [
-                        "gaussiannb",
-                    ]
-                )
-                args.models.remove("bayes_models")
-            elif model == "linear_models":
-                args.models.extend(
-                    [
-                        "svm",
-                        "logistic_regression",
-                    ]
-                )
-                args.models.remove("linear_models")
-            elif model == "neighbors_models":
-                args.models.extend(
-                    [
-                        "knn",
-                    ]
-                )
-                args.models.remove("neighbors_models")
-            elif model == "tree_models":
-                args.models.extend(
-                    [
-                        "decision_tree",
-                        "random_forest",
-                    ]
-                )
-                args.models.remove("tree_models")
-
-        args.models = list(dict.fromkeys(args.models))
+        args.models = expand_model_categories(args.models)
 
     return args
 
 
-def main(args):
-    print(f"Selected model: {args.models}")
-    print(f"Selected resident: {args.resident}")
-
+def prepare_data(resident):
+    """Load and prepare data for training."""
     print(f"Loading data from {DATA_DIR_HOUSE_A}")
     df = load_all_data(DATA_DIR_HOUSE_A)
     # df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt")
 
-    feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
+    other_resident = "R1" if resident == "R2" else "R2"
+    feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A + [f"Activity_{other_resident}"]
+    print(f"Feature columns: {feature_columns}")
+
     X = df[feature_columns]
     # Prepare features and targets for each split
     # X_train = train_data[feature_columns]
     # X_val = val_data[feature_columns]
     # X_test = test_data[feature_columns]
 
-    target_column = f"Activity_{args.resident}"
-    y = df[target_column]
+    y = df[f"Activity_{resident}"]
     # y_train = train_data[target_column]
     # y_val = val_data[target_column]
     # y_test = test_data[target_column]
 
-    # Results storage
-    results = {}
-    for model_name in args.models:
-        print(f"\n{'-'*40}\nTraining {model_name}...\n{'-'*40}")
+    return X, y
 
-        model = get_model(model_name)
 
-        # Train model
-        X_train, X_test, y_train, y_test = model.train(X, y)
+def train_and_evaluate_model(model_name, X, y, print_report=False):
+    """Train and evaluate a single model."""
+    print(f"\n{'-'*40}\nTraining {model_name}...\n{'-'*40}")
 
-        # Evaluate model
-        accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=False)
+    model = get_model(model_name)
+    X_train, X_test, y_train, y_test = model.train(X, y)
 
-        # Store results
-        results[model_name] = {
-            "accuracy": accuracy,
-            "precision": np.mean(precision),
-            "recall": np.mean(recall),
-            "fscore": np.mean(fscore),
-        }
+    accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=print_report)
 
-        if args.save_models:
-            artifacts_dir = os.path.join(
-                "src", "artifacts", "models", f"{model_name}_{args.resident}"
-            )
-            os.makedirs(artifacts_dir, exist_ok=True)
+    return {
+        "accuracy": accuracy,
+        "precision": np.mean(precision),
+        "recall": np.mean(recall),
+        "fscore": np.mean(fscore),
+    }, model
 
-            model.save(
-                artifacts_dir=artifacts_dir,
-                accuracy=results[model_name]["accuracy"],
-                precision=results[model_name]["precision"],
-                recall=results[model_name]["recall"],
-                fscore=results[model_name]["fscore"],
-            )
 
-    # Print summary of results
+def save_model_artifacts(model, model_name, resident, metrics, artifacts_dir):
+    """Save model and its metrics to disk."""
+    model_dir = os.path.join(artifacts_dir, f"{model_name}_{resident}")
+    os.makedirs(model_dir, exist_ok=True)
+
+    model.save(
+        artifacts_dir=model_dir,
+        accuracy=metrics["accuracy"],
+        precision=metrics["precision"],
+        recall=metrics["recall"],
+        fscore=metrics["fscore"],
+    )
+
+
+def print_results(results):
+    """Print summary of all model results."""
     print(f"\n{'-'*40}\nResults summary\n{'-'*40}")
     for model_name, metrics in results.items():
         print(f"\n{model_name}:")
@@ -206,6 +186,31 @@ def main(args):
         print(f"  Precision: {metrics['precision']:.4f}")
         print(f"  Recall:    {metrics['recall']:.4f}")
         print(f"  F1-Score:  {metrics['fscore']:.4f}")
+
+
+def main(args):
+    print(f"Selected model: {args.models}")
+    print(f"Selected resident: {args.resident}")
+
+    # Prepare data
+    X, y = prepare_data(args.resident)
+
+    # Train and evaluate models
+    results = {}
+    for model_name in args.models:
+        metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
+        results[model_name] = metrics
+
+        if args.save_models:
+            save_model_artifacts(
+                model,
+                model_name,
+                args.resident,
+                metrics,
+                os.path.join("src", "artifacts", "models"),
+            )
+
+    print_results(results)
 
 
 if __name__ == "__main__":
