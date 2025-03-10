@@ -29,34 +29,44 @@ def expand_model_categories(models):
 
     return list(dict.fromkeys(expanded_models))
 
-
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Activity prediction model")
+    model_choices = [
+        "all",
+        "ensemble_models",
+        "bayes_models",
+        "linear_models",
+        "neighbors_models",
+        "tree_models",
+        "knn",
+        "decision_tree",
+        "svm",
+        "logistic_regression",
+        "random_forest",
+        "lightgbm",
+        "gradient_boosting",
+        "catboost",
+        "xgboost",
+        "gaussiannb",
+    ]
+
+    model_help_text = (
+        'One or more models to use (use "all" for all models, or use model category like "ensemble_models", "linear_models", etc.).\n'
+        'Available choices:\n' + 
+        '\n'.join(f'  - {choice}' for choice in sorted(model_choices))
+    )
+
+    parser = argparse.ArgumentParser(
+        description="Activity prediction model",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     # Model selection argument - allows multiple models
     parser.add_argument(
         "--models",
         nargs="+",
         default=["decision_tree"],
-        choices=[
-            "all",
-            "ensemble_models",
-            "bayes_models",
-            "linear_models",
-            "neighbors_models",
-            "tree_models",
-            "knn",
-            "decision_tree",
-            "svm",
-            "logistic_regression",
-            "random_forest",
-            "lightgbm",
-            "gradient_boosting",
-            "catboost",
-            "xgboost",
-            "gaussiannb",
-        ],
-        help='One or more models to use (use "all" for all models, or use model category like "ensemble_models", "linear_models", etc.)',
+        choices=model_choices,
+        help=model_help_text,
     )
 
     # Resident selection argument
