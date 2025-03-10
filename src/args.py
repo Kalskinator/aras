@@ -52,6 +52,14 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "--data",
+        type=str,
+        default="all",
+        choices=["all", "other"],
+        help="Dataset to use: 'all' for complete dataset or 'other' for filtered data",
+    )
+
+    parser.add_argument(
         "--save_models",
         action="store_true",
         help="Save trained models to disk",

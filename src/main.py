@@ -10,11 +10,15 @@ from src.models import get_model
 from src.args import parse_arguments
 
 
-def prepare_data(resident):
+def prepare_data(resident, data):
     """Load and prepare data for training."""
     print(f"Loading data from {DATA_DIR_HOUSE_A}")
-    df = load_all_data(DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS)
-    # df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt", SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS)
+    if data == "all":
+        df = load_all_data(DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS)
+    else:
+        df = load_day_data(
+            DATA_DIR_HOUSE_A / f"DAY_1.txt", SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS
+        )
 
     other_resident = "R1" if resident == "R2" else "R2"
     feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A + [f"Activity_{other_resident}"]
@@ -81,7 +85,7 @@ def main(args):
     print(f"Selected resident: {args.resident}")
 
     # Prepare data
-    X, y = prepare_data(args.resident)
+    X, y = prepare_data(args.resident, args.data)
 
     # Train and evaluate models
     results = {}
