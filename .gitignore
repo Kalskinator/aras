@@ -175,3 +175,4 @@ shap_force_plot.html
 .DS_Store
 
 artifacts/
+catboost_info/
