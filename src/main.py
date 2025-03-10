@@ -1,6 +1,9 @@
 import sys
 import os
 import numpy as np
+from tqdm import tqdm
+from utils.progress_bar_helper import ProgressBarHelper 
+
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -51,7 +54,11 @@ def train_and_evaluate_model(model_name, X, y, print_report=False):
     print(f"\n{'-'*40}\nTraining {model_name}...\n{'-'*40}")
 
     model = get_model(model_name)
-    X_train, X_test, y_train, y_test = model.train(X, y)
+
+    # Create a progress bar for the training process
+    progress_bar = ProgressBarHelper(total=4, desc=f"Training {model_name}") 
+    X_train, X_test, y_train, y_test = model.train(X, y, progress_bar=progress_bar)
+    progress_bar.close()
 
     accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=print_report)
 
