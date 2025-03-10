@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 
 from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A
-from src.Data.data_loader import load_all_data, load_day_data
+from src.Data.data_loader import load_data_with_time_split, load_day_data, load_all_data
 from src.models import get_model, MODEL_REGISTRY
 
 
@@ -55,6 +55,26 @@ def parse_arguments():
         help="Save trained models to disk",
     )
 
+    # Add arguments for time-based split
+    parser.add_argument(
+        "--train_days",
+        type=int,
+        default=7,
+        help="Number of days to use for training",
+    )
+    parser.add_argument(
+        "--val_days",
+        type=int,
+        default=2,
+        help="Number of days to use for validation",
+    )
+    parser.add_argument(
+        "--test_days",
+        type=int,
+        default=2,
+        help="Number of days to use for testing",
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -74,37 +94,47 @@ def parse_arguments():
         ]
     else:
         models = args.models.copy()
-        
+
         for model in models:
             if model == "ensemble_models":
-                args.models.extend([
-                    "lightgbm",
-                    "gradient_boosting",
-                    "catboost",
-                    "xgboost",
-                ])
+                args.models.extend(
+                    [
+                        "lightgbm",
+                        "gradient_boosting",
+                        "catboost",
+                        "xgboost",
+                    ]
+                )
                 args.models.remove("ensemble_models")
             elif model == "bayes_models":
-                args.models.extend([
-                    "gaussiannb",
-                ])
+                args.models.extend(
+                    [
+                        "gaussiannb",
+                    ]
+                )
                 args.models.remove("bayes_models")
             elif model == "linear_models":
-                args.models.extend([
-                    "svm",
-                    "logistic_regression",
-                ])
+                args.models.extend(
+                    [
+                        "svm",
+                        "logistic_regression",
+                    ]
+                )
                 args.models.remove("linear_models")
             elif model == "neighbors_models":
-                args.models.extend([
-                    "knn",
-                ])
+                args.models.extend(
+                    [
+                        "knn",
+                    ]
+                )
                 args.models.remove("neighbors_models")
             elif model == "tree_models":
-                args.models.extend([
-                    "decision_tree",
-                    "random_forest",
-                ])
+                args.models.extend(
+                    [
+                        "decision_tree",
+                        "random_forest",
+                    ]
+                )
                 args.models.remove("tree_models")
 
         args.models = list(dict.fromkeys(args.models))
@@ -117,14 +147,21 @@ def main(args):
     print(f"Selected resident: {args.resident}")
 
     print(f"Loading data from {DATA_DIR_HOUSE_A}")
-    # df = load_all_data(DATA_DIR_HOUSE_A)
-    df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt")
+    df = load_all_data(DATA_DIR_HOUSE_A)
+    # df = load_day_data(DATA_DIR_HOUSE_A / "DAY_1.txt")
 
     feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A
     X = df[feature_columns]
+    # Prepare features and targets for each split
+    # X_train = train_data[feature_columns]
+    # X_val = val_data[feature_columns]
+    # X_test = test_data[feature_columns]
 
     target_column = f"Activity_{args.resident}"
     y = df[target_column]
+    # y_train = train_data[target_column]
+    # y_val = val_data[target_column]
+    # y_test = test_data[target_column]
 
     # Results storage
     results = {}
@@ -148,7 +185,9 @@ def main(args):
         }
 
         if args.save_models:
-            artifacts_dir = os.path.join("artifacts", "models", f"{model_name}_{args.resident}")
+            artifacts_dir = os.path.join(
+                "src", "artifacts", "models", f"{model_name}_{args.resident}"
+            )
             os.makedirs(artifacts_dir, exist_ok=True)
 
             model.save(
@@ -161,12 +200,12 @@ def main(args):
 
     # Print summary of results
     print(f"\n{'-'*40}\nResults summary\n{'-'*40}")
-    for model_name, metrics in sorted(results.items(), key=lambda x: x[1]['accuracy'], reverse=True):
-        print(f"{model_name}:")
+    for model_name, metrics in results.items():
+        print(f"\n{model_name}:")
         print(f"  Accuracy:  {metrics['accuracy']:.4f}")
         print(f"  Precision: {metrics['precision']:.4f}")
         print(f"  Recall:    {metrics['recall']:.4f}")
-        print(f"  F-score:   {metrics['fscore']:.4f}")
+        print(f"  F1-Score:  {metrics['fscore']:.4f}")
 
 
 if __name__ == "__main__":
