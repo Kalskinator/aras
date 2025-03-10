@@ -52,6 +52,14 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "--house",
+        type=str,
+        default="A",
+        choices=["A", "B"],
+        help="House to analyze (A or B)",
+    )
+
+    parser.add_argument(
         "--data",
         type=str,
         default="all",

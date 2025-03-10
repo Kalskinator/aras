@@ -4,33 +4,41 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.config import DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A, ACTIVITY_COLUMNS
+from src.config import (
+    DATA_DIR_HOUSE_A,
+    DATA_DIR_HOUSE_B,
+    SENSOR_COLUMNS_HOUSE_A,
+    SENSOR_COLUMNS_HOUSE_B,
+    ACTIVITY_COLUMNS,
+)
 from src.Data.data_loader import load_data_with_time_split, load_day_data, load_all_data
 from src.models import get_model
 from src.args import parse_arguments
 
 
-def prepare_data(resident, data):
+def prepare_data(resident, data, house):
     """Load and prepare data for training."""
-    print(f"Loading data from {DATA_DIR_HOUSE_A}")
+
+    data_dir = DATA_DIR_HOUSE_A if house == "A" else DATA_DIR_HOUSE_B
+    sensor_columns = SENSOR_COLUMNS_HOUSE_A if house == "A" else SENSOR_COLUMNS_HOUSE_B
+
+    print(f"Loading data from {data_dir}")
     if data == "all":
-        df = load_all_data(DATA_DIR_HOUSE_A, SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS)
+        df = load_all_data(data_dir, sensor_columns + ACTIVITY_COLUMNS)
     else:
-        df = load_day_data(
-            DATA_DIR_HOUSE_A / f"DAY_1.txt", SENSOR_COLUMNS_HOUSE_A + ACTIVITY_COLUMNS
-        )
+        df = load_day_data(data_dir / f"DAY_1.txt", sensor_columns + ACTIVITY_COLUMNS)
 
     other_resident = "R1" if resident == "R2" else "R2"
-    feature_columns = ["Time"] + SENSOR_COLUMNS_HOUSE_A + [f"Activity_{other_resident}"]
+    feature_columns = ["Time"] + sensor_columns + [f"Activity_{other_resident}"]
     print(f"Feature columns: {feature_columns}")
 
     X = df[feature_columns]
+    y = df[f"Activity_{resident}"]
+
     # Prepare features and targets for each split
     # X_train = train_data[feature_columns]
     # X_val = val_data[feature_columns]
     # X_test = test_data[feature_columns]
-
-    y = df[f"Activity_{resident}"]
     # y_train = train_data[target_column]
     # y_val = val_data[target_column]
     # y_test = test_data[target_column]
@@ -83,9 +91,10 @@ def print_results(results):
 def main(args):
     print(f"Selected model: {args.models}")
     print(f"Selected resident: {args.resident}")
+    print(f"Selected house: {args.house}")
 
     # Prepare data
-    X, y = prepare_data(args.resident, args.data)
+    X, y = prepare_data(args.resident, args.data, args.house)
 
     # Train and evaluate models
     results = {}

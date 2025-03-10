@@ -5,6 +5,7 @@ ROOT_DIR = Path(__file__).parent.parent
 
 # Data directories
 DATA_DIR_HOUSE_A = ROOT_DIR / "src" / "data" / "House_A"
+DATA_DIR_HOUSE_B = ROOT_DIR / "src" / "data" / "House_B"
 
 # Sensor and activity column definitions
 SENSOR_COLUMNS_HOUSE_A = [
@@ -28,6 +29,29 @@ SENSOR_COLUMNS_HOUSE_A = [
     "Di2_WaterCloset",
     "Te1_Kitchen",
     "Fo3_Bed",
+]
+
+SENSOR_COLUMNS_HOUSE_B = [
+    "co1_KitchenCupboard",
+    "co2_KitchenCupboard",
+    "co3_HouseDoor",
+    "co4_WardrobeDoor",
+    "co5_WardrobeDoor",
+    "co6_ShowerCabinetDoor",
+    "di2_Tap",
+    "fo1_Chair",
+    "fo2_Chair",
+    "fo3_Chair",
+    "ph1_Fridge",
+    "ph2_KitchenDrawer",
+    "pr1_Couch",
+    "pr2_Couch",
+    "pr3_Bed",
+    "pr4_Bed",
+    "pr5_Armchair",
+    "so1_BathroomDoor",
+    "so2_Kitchen",
+    "so3_Closet",
 ]
 
 ACTIVITY_COLUMNS = ["Activity_R1", "Activity_R2"]
