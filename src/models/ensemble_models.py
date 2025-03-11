@@ -45,6 +45,13 @@ class LightGBMModel(BaseModel):
 
             # n_estimators=self.n_estimators,
             # learning_rate=self.learning_rate,
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            num_leaves=self.num_leaves,
+            max_depth=self.max_depth,
+            min_child_samples=self.min_child_samples,
+            subsample=self.subsample,
+            colsample_bytree=self.colsample_bytree,
             random_state=random_state,
             n_jobs=-1,  # Use all available cores
         )
