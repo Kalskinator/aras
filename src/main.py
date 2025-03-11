@@ -23,6 +23,7 @@ from src.Data.data_loader import (
 from src.models import get_model
 from src.args import parse_arguments
 from src.feature_engineering import engineer_temporal_features
+from src.models.ensemble_models import LIGHTGBM_PARAM_GRID  # Import the parameter grid
 
 
 def train_and_evaluate_model(model_name, X, y, print_report=False):
@@ -106,11 +107,13 @@ def main(args):
         if args.training == "default":
             for model_name in args.models:
                 model = get_model(model_name)
-                # Commenting out the hyperparameter tuning call
-                # if model_name == "lightgbm":
-                #     best_params, best_score = model.tune_hyperparameters(X, y, param_grid, n_iter=25)
-                #     print(f"Best parameters for {model_name}: {best_params}")
-                #     print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
+                # Use the imported parameter grid
+                if model_name == "lightgbm":
+                    best_params, best_score = model.tune_hyperparameters(
+                        X, y, LIGHTGBM_PARAM_GRID, n_iter=25
+                    )
+                    print(f"Best parameters for {model_name}: {best_params}")
+                    print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
 
                 metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
                 results[model_name] = metrics
@@ -125,8 +128,8 @@ def main(args):
                     )
 
         elif args.training == "cross_validation":
-            results = cross_validate_models(args.models, X, y, args.print_report)
-
+            # results = cross_validate_models(args.models, X, y, args.print_report)
+            pass
         print_results(results)
 
 
