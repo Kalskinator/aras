@@ -13,16 +13,10 @@ from src.config import (
     SENSOR_COLUMNS_HOUSE_B,
     ACTIVITY_COLUMNS,
 )
-from src.Data.data_loader import (
-    load_data_with_time_split,
-    load_day_data,
-    load_all_data,
-    prepare_data,
-    prepare_data_with_engineering,
-)
 from src.models import get_model
 from src.args import parse_arguments
-from src.feature_engineering import engineer_features
+from src.Data.data_preprocessor import DataPreprocessor
+from src.feature_engineering import FeatureEngineering
 from src.models.ensemble_models import LIGHTGBM_PARAM_GRID  # Import the parameter grid
 
 
@@ -79,7 +73,7 @@ def main(args):
 
     # Prepare data
     if not args.feature_engineering:
-        X, y = prepare_data(
+        X, y = DataPreprocessor.prepare_data(
             args.resident,
             args.data,
             args.house,
@@ -90,7 +84,7 @@ def main(args):
             ACTIVITY_COLUMNS,
         )
     if args.feature_engineering:
-        X, y = prepare_data_with_engineering(
+        X, y = DataPreprocessor.prepare_data_with_engineering(
             args.resident,
             args.data,
             args.house,
@@ -99,7 +93,7 @@ def main(args):
             SENSOR_COLUMNS_HOUSE_A,
             SENSOR_COLUMNS_HOUSE_B,
             ACTIVITY_COLUMNS,
-            engineer_features,
+            FeatureEngineering.engineer_features,
         )
 
     if not args.no_training:
