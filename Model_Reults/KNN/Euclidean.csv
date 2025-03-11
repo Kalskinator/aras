@@ -1,0 +1,5 @@
+﻿Euclidean,House A - R1,House A - R2,House B - R1,House B - R2
+Accuracy ,0.6579,0.7452,0.8681,0.8727
+Precision,0.5461,0.6191,0.6873,0.6587
+Recall,0.3803,0.3861,0.4027,0.4429
+F1-Score,0.4214,0.4545,0.4816,0.5029

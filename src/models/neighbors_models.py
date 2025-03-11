@@ -5,16 +5,17 @@ from sklearn.metrics import precision_recall_fscore_support as score
 import time
 from .base_model import BaseModel
 import numpy as np
+from src.utils.progress_bar_helper import ProgressBarHelper
 
 
 class KNearestNeighborsModel(BaseModel):
-    def __init__(self, n_neighbors=5, metric="manhattan", algorithm="auto"):
+    def __init__(self, n_neighbors=5, metric="euclidean", algorithm="kd_tree"):
         super().__init__("knn")
         self.n_neighbors = n_neighbors
         self.metric = metric
         self.algorithm = algorithm
 
-    def train(self, X, y, test_size=0.3, random_state=42):
+    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
         print(f"Training KNN model with {self.n_neighbors} neighbors...")
         start_time = time.time()
 
@@ -24,12 +25,23 @@ class KNearestNeighborsModel(BaseModel):
         print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
 
         self.model = KNeighborsClassifier(
-            n_neighbors=self.n_neighbors, 
-            # metric=self.metric,
-            algorithm=self.algorithm, 
-            n_jobs=-1  # Use all available cores
+            n_neighbors=self.n_neighbors,
+            metric=self.metric,
+            algorithm=self.algorithm,
+            n_jobs=-1,  # Use all available cores
         )
-        self.model.fit(X_train, y_train)
+
+        # Simulate progress updates since KNN training is typically fast
+        if progress_bar:
+            progress_bar_helper = ProgressBarHelper(total=4, desc="Training KNN")
+            for _ in range(4):
+                # For KNN, fitting happens once, so we simulate progress
+                if _ == 0:
+                    self.model.fit(X_train, y_train)
+                progress_bar_helper.update(1)
+            progress_bar_helper.close()
+        else:
+            self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
         print(f"KNN training completed in {train_time:.2f} seconds")
@@ -38,7 +50,12 @@ class KNearestNeighborsModel(BaseModel):
 
     def evaluate(self, X_test, y_test, print_report=False):
         print(f"\nEvaluating KNN model...")
+        start_time = time.time()  # Add timing for evaluation
+
         y_pred = self.model.predict(X_test)
+
+        eval_time = time.time() - start_time  # Calculate evaluation time
+        print(f"KNN evaluation completed in {eval_time:.2f} seconds")
 
         accuracy = accuracy_score(y_test, y_pred)
         precision, recall, fscore, support = score(y_test, y_pred)

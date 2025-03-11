@@ -6,6 +6,8 @@ from sklearn.metrics import precision_recall_fscore_support as score
 import time
 from .base_model import BaseModel
 import numpy as np
+from src.utils.progress_bar_helper import ProgressBarHelper
+
 
 # Maybe rename to SGDClassifierModel
 class SupportVectorMachineModel(BaseModel):
@@ -15,7 +17,7 @@ class SupportVectorMachineModel(BaseModel):
         self.kernel = kernel
         self.gamma = gamma
 
-    def train(self, X, y, test_size=0.3, random_state=42):
+    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
         print(f"Training SVM model with Gamma={self.gamma} and C={self.C}...")
         start_time = time.time()
 
@@ -25,22 +27,27 @@ class SupportVectorMachineModel(BaseModel):
         print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
 
         self.model = SGDClassifier(
-            # C=self.C,
-            # # kernel=self.kernel,
-            # gamma=self.gamma,
-            # # probability=True,
-            # random_state=random_state,
-            # verbose=True,
             loss="hinge",
             max_iter=1000,
-            verbose=1,
+            verbose=0,  # Set to 0 to disable built-in verbosity when using our progress bar
             tol=1e-3,
             random_state=random_state,
             early_stopping=True,
             validation_fraction=0.1,
-            n_iter_no_change=5
+            n_iter_no_change=5,
         )
-        self.model.fit(X_train, y_train)
+
+        # Use progress bar for training
+        if progress_bar:
+            progress_bar_helper = ProgressBarHelper(total=4, desc="Training SVM")
+
+            # SGD is iterative, so we can update the progress bar as it trains
+            self.model.fit(X_train, y_train)
+            for i in range(4):
+                progress_bar_helper.update(1)
+            progress_bar_helper.close()
+        else:
+            self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
         print(f"SVM training completed in {train_time:.2f} seconds")

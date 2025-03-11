@@ -12,18 +12,17 @@ from tqdm import tqdm
 from src.utils.progress_bar_helper import ProgressBarHelper
 
 
-# Best parameters for lightgbm: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
+# Best parameters for lightgbm and R1: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
 # Best cross-validation score for lightgbm: 0.8448
-# Define hyperparameter grid for LightGBM
-"""     param_grid = {
-    'n_estimators': [50, 100, 200],
-    'learning_rate': [0.01, 0.1, 0.2],
-    'num_leaves': [31, 50, 100],
-    'max_depth': [-1, 10, 20],
-    'min_child_samples': [20, 50, 100],
-    'subsample': [0.6, 0.8, 1.0],
-    'colsample_bytree': [0.6, 0.8, 1.0]
-} """
+LIGHTGBM_PARAM_GRID = {
+    "n_estimators": [50, 100, 200],
+    "learning_rate": [0.01, 0.1, 0.2],
+    "num_leaves": [31, 50, 100],
+    "max_depth": [-1, 10, 20],
+    "min_child_samples": [20, 50, 100],
+    "subsample": [0.6, 0.8, 1.0],
+    "colsample_bytree": [0.6, 0.8, 1.0],
+}
 
 
 class LightGBMModel(BaseModel):
