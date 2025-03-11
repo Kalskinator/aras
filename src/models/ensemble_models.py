@@ -66,14 +66,23 @@ class LightGBMModel(BaseModel):
 
             n_estimators=self.n_estimators,
             learning_rate=self.learning_rate,
+            num_leaves=self.num_leaves,
+            max_depth=self.max_depth,
+            min_child_samples=self.min_child_samples,
+            subsample=self.subsample,
+            colsample_bytree=self.colsample_bytree,
             random_state=random_state,
             n_jobs=-1,  # Use all available cores
         
 
         # Define a custom callback to update the progress bar
         if progress_bar:
+<<<<<<< Updated upstream
             progress_bar_helper = ProgressBarHelper(total=self.n_estimators, desc="Training LightGBM")
 
+=======
+            progress_bar_helper = ProgressBarHelper(total=self.n_estimators // 4, desc="Training LightGBM")  # 25% increments
+>>>>>>> Stashed changes
             def callback(env):
                 progress_bar_helper.update(1)
 
@@ -271,7 +280,8 @@ class XGBoostModel(BaseModel):
         self.max_depth = max_depth
         self.label_encoder = LabelEncoder()
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
+        # print(f"Training XGBoost model with {self.n_estimators} estimators...")
         start_time = time.time()
 
         X_train, X_test, y_train, y_test = train_test_split(
@@ -281,24 +291,15 @@ class XGBoostModel(BaseModel):
 
         # Transform labels to continuous integers starting from 0
         y_train_encoded = self.label_encoder.fit_transform(y_train)
-
+        
         self.model = xgb.XGBClassifier(
-            n_estimators=self.n_estimators,
-            learning_rate=self.learning_rate,
-            max_depth=self.max_depth,
+            # n_estimators=self.n_estimators,
+            # learning_rate=self.learning_rate,
+            # max_depth=self.max_depth,
             random_state=random_state,
             n_jobs=-1,  # Use all available cores
         )
-
-        # Simulate progress updates
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training XGBoost")  # 4 updates for 25% increments
-            for _ in range(4):
-                self.model.fit(X_train, y_train_encoded)
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
-        else:
-            self.model.fit(X_train, y_train_encoded)
+        self.model.fit(X_train, y_train_encoded)
 
         train_time = time.time() - start_time
         print(f"XGBoost training completed in {train_time:.2f} seconds")
@@ -312,7 +313,7 @@ class XGBoostModel(BaseModel):
         y_pred = self.label_encoder.inverse_transform(y_pred_encoded)
 
         accuracy = accuracy_score(y_test, y_pred)
-        precision, recall, fscore, support = score(y_test, y_pred, zero_division=0)
+        precision, recall, fscore, support = score(y_test, y_pred)
 
         if print_report:
             print("\nClassification Report:")
