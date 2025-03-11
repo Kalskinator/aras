@@ -68,6 +68,18 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "--feature_engineering",
+        action="store_true",
+        help="Perform feature engineering",
+    )
+
+    parser.add_argument(
+        "--no_training",
+        action="store_true",
+        help="Do not train models",
+    )
+
+    parser.add_argument(
         "--save_models",
         action="store_true",
         help="Save trained models to disk",
@@ -107,9 +119,5 @@ def parse_arguments():
 
     # Expand model categories to individual models
     args.models = expand_model_categories(args.models)
-
-    # # Convert 'none' to None for feature selection
-    # if args.feature_selection == "none":
-    #     args.feature_selection = None
 
     return args

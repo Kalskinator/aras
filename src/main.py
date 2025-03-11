@@ -14,39 +14,16 @@ from src.config import (
     SENSOR_COLUMNS_HOUSE_B,
     ACTIVITY_COLUMNS,
 )
-from src.Data.data_loader import load_data_with_time_split, load_day_data, load_all_data
+from src.Data.data_loader import (
+    load_data_with_time_split,
+    load_day_data,
+    load_all_data,
+    prepare_data,
+    prepare_data_with_engineering,
+)
 from src.models import get_model
 from src.args import parse_arguments
-
-
-def prepare_data(resident, data, house):
-    """Load and prepare data for training."""
-
-    data_dir = DATA_DIR_HOUSE_A if house == "A" else DATA_DIR_HOUSE_B
-    sensor_columns = SENSOR_COLUMNS_HOUSE_A if house == "A" else SENSOR_COLUMNS_HOUSE_B
-
-    print(f"Loading data from {data_dir}")
-    if data == "all":
-        df = load_all_data(data_dir, sensor_columns + ACTIVITY_COLUMNS)
-    else:
-        df = load_day_data(data_dir / f"DAY_1.txt", sensor_columns + ACTIVITY_COLUMNS)
-
-    other_resident = "R1" if resident == "R2" else "R2"
-    feature_columns = ["Time"] + sensor_columns + [f"Activity_{other_resident}"]
-    print(f"Feature columns: {feature_columns}")
-
-    X = df[feature_columns]
-    y = df[f"Activity_{resident}"]
-
-    # Prepare features and targets for each split
-    # X_train = train_data[feature_columns]
-    # X_val = val_data[feature_columns]
-    # X_test = test_data[feature_columns]
-    # y_train = train_data[target_column]
-    # y_val = val_data[target_column]
-    # y_test = test_data[target_column]
-
-    return X, y
+from src.feature_engineering import engineer_temporal_features
 
 
 def train_and_evaluate_model(model_name, X, y, print_report=False):
@@ -101,24 +78,45 @@ def main(args):
     print(f"Selected house: {args.house}")
 
     # Prepare data
-    X, y = prepare_data(args.resident, args.data, args.house)
+    if not args.feature_engineering:
+        X, y = prepare_data(
+            args.resident,
+            args.data,
+            args.house,
+            DATA_DIR_HOUSE_A,
+            DATA_DIR_HOUSE_B,
+            SENSOR_COLUMNS_HOUSE_A,
+            SENSOR_COLUMNS_HOUSE_B,
+            ACTIVITY_COLUMNS,
+        )
+    if args.feature_engineering:
+        X, y = prepare_data_with_engineering(
+            args.resident,
+            args.data,
+            args.house,
+            DATA_DIR_HOUSE_A,
+            DATA_DIR_HOUSE_B,
+            SENSOR_COLUMNS_HOUSE_A,
+            SENSOR_COLUMNS_HOUSE_B,
+            ACTIVITY_COLUMNS,
+            engineer_temporal_features,
+        )
+    if not args.no_training:
+        results = {}
+        for model_name in args.models:
+            metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
+            results[model_name] = metrics
 
-    # Train and evaluate models
-    results = {}
-    for model_name in args.models:
-        metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
-        results[model_name] = metrics
+            if args.save_models:
+                save_model_artifacts(
+                    model,
+                    model_name,
+                    args.resident,
+                    metrics,
+                    os.path.join("src", "artifacts", "models"),
+                )
 
-        if args.save_models:
-            save_model_artifacts(
-                model,
-                model_name,
-                args.resident,
-                metrics,
-                os.path.join("src", "artifacts", "models"),
-            )
-
-    print_results(results)
+        print_results(results)
 
 
 if __name__ == "__main__":
