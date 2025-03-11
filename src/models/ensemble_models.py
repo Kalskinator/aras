@@ -12,8 +12,6 @@ from tqdm import tqdm
 from src.utils.progress_bar_helper import ProgressBarHelper
 
 
-#Best parameters found: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
-#Best cross-validation score: 0.8448
 #Best parameters for lightgbm: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
 #Best cross-validation score for lightgbm: 0.8448
 class LightGBMModel(BaseModel):
