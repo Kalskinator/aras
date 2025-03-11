@@ -80,6 +80,14 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "--training",
+        type=str,
+        default="default",
+        choices=["default", "cross_validation"],
+        help="Training method",
+    )
+
+    parser.add_argument(
         "--save_models",
         action="store_true",
         help="Save trained models to disk",

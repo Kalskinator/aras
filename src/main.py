@@ -2,9 +2,7 @@ import sys
 import os
 import numpy as np
 from tqdm import tqdm
-from utils.progress_bar_helper import ProgressBarHelper
-from tqdm import tqdm
-from utils.progress_bar_helper import ProgressBarHelper 
+from src.utils.progress_bar_helper import ProgressBarHelper
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -35,7 +33,7 @@ def train_and_evaluate_model(model_name, X, y, print_report=False):
     model = get_model(model_name)
 
     # Create a progress bar for the training process
-    progress_bar = ProgressBarHelper(total=4, desc=f"Training {model_name}") 
+    progress_bar = ProgressBarHelper(total=4, desc=f"Training {model_name}")
     X_train, X_test, y_train, y_test = model.train(X, y, progress_bar=progress_bar)
     progress_bar.close()
 
@@ -104,39 +102,33 @@ def main(args):
             engineer_temporal_features,
         )
 
-# Define hyperparameter grid for LightGBM
-    """     param_grid = {
-        'n_estimators': [50, 100, 200],
-        'learning_rate': [0.01, 0.1, 0.2],
-        'num_leaves': [31, 50, 100],
-        'max_depth': [-1, 10, 20],
-        'min_child_samples': [20, 50, 100],
-        'subsample': [0.6, 0.8, 1.0],
-        'colsample_bytree': [0.6, 0.8, 1.0]
-    } """
+    if not args.no_training:
+        results = {}
+        if args.training == "default":
+            for model_name in args.models:
+                model = get_model(model_name)
+                # Commenting out the hyperparameter tuning call
+                # if model_name == "lightgbm":
+                #     best_params, best_score = model.tune_hyperparameters(X, y, param_grid, n_iter=25)
+                #     print(f"Best parameters for {model_name}: {best_params}")
+                #     print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
 
-    results = {}
-    for model_name in args.models:
-        model = get_model(model_name)
-        # Commenting out the hyperparameter tuning call
-        # if model_name == "lightgbm":
-        #     best_params, best_score = model.tune_hyperparameters(X, y, param_grid, n_iter=25)
-        #     print(f"Best parameters for {model_name}: {best_params}")
-        #     print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
+                metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
+                results[model_name] = metrics
 
-        metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
-        results[model_name] = metrics
+                if args.save_models:
+                    save_model_artifacts(
+                        model,
+                        model_name,
+                        args.resident,
+                        metrics,
+                        os.path.join("src", "artifacts", "models"),
+                    )
 
-        if args.save_models:
-            save_model_artifacts(
-                model,
-                model_name,
-                args.resident,
-                metrics,
-                os.path.join("src", "artifacts", "models"),
-            )
+        elif args.training == "cross_validation":
+            results = cross_validate_models(args.models, X, y, args.print_report)
 
-    print_results(results)
+        print_results(results)
 
 
 if __name__ == "__main__":

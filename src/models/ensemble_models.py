@@ -12,8 +12,20 @@ from tqdm import tqdm
 from src.utils.progress_bar_helper import ProgressBarHelper
 
 
-#Best parameters for lightgbm: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
-#Best cross-validation score for lightgbm: 0.8448
+# Best parameters for lightgbm: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
+# Best cross-validation score for lightgbm: 0.8448
+# Define hyperparameter grid for LightGBM
+"""     param_grid = {
+    'n_estimators': [50, 100, 200],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'num_leaves': [31, 50, 100],
+    'max_depth': [-1, 10, 20],
+    'min_child_samples': [20, 50, 100],
+    'subsample': [0.6, 0.8, 1.0],
+    'colsample_bytree': [0.6, 0.8, 1.0]
+} """
+
+
 class LightGBMModel(BaseModel):
     def __init__(self):
         super().__init__("lightgbm")
@@ -40,7 +52,6 @@ class LightGBMModel(BaseModel):
         y_test_encoded = self.label_encoder.transform(y_test)
 
         self.model = lgb.LGBMClassifier(
-
             # n_estimators=self.n_estimators,
             # learning_rate=self.learning_rate,
             n_estimators=self.n_estimators,
@@ -54,49 +65,51 @@ class LightGBMModel(BaseModel):
             n_jobs=-1,  # Use all available cores
         )
         self.model.fit(X_train, y_train_encoded)
-        n_estimators=self.n_estimators,
-        learning_rate=self.learning_rate,
-        num_leaves=self.num_leaves,
-        max_depth=self.max_depth,
-        min_child_samples=self.min_child_samples,
-        subsample=self.subsample,
-        colsample_bytree=self.colsample_bytree,
-        random_state=random_state,
-        n_jobs=-1,  # Use all available cores
-        
+        n_estimators = (self.n_estimators,)
+        learning_rate = (self.learning_rate,)
+        num_leaves = (self.num_leaves,)
+        max_depth = (self.max_depth,)
+        min_child_samples = (self.min_child_samples,)
+        subsample = (self.subsample,)
+        colsample_bytree = (self.colsample_bytree,)
+        random_state = (random_state,)
+        n_jobs = (-1,)  # Use all available cores
 
         # Define a custom callback to update the progress bar
         if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=self.n_estimators // 4, desc="Training LightGBM")  # 25% increments
+            progress_bar_helper = ProgressBarHelper(
+                total=self.n_estimators // 4, desc="Training LightGBM"
+            )  # 25% increments
 
-            n_estimators=self.n_estimators,
-            learning_rate=self.learning_rate,
-            num_leaves=self.num_leaves,
-            max_depth=self.max_depth,
-            min_child_samples=self.min_child_samples,
-            subsample=self.subsample,
-            colsample_bytree=self.colsample_bytree,
-            random_state=random_state,
-            n_jobs=-1,  # Use all available cores
-        
+            n_estimators = (self.n_estimators,)
+            learning_rate = (self.learning_rate,)
+            num_leaves = (self.num_leaves,)
+            max_depth = (self.max_depth,)
+            min_child_samples = (self.min_child_samples,)
+            subsample = (self.subsample,)
+            colsample_bytree = (self.colsample_bytree,)
+            random_state = (random_state,)
+            n_jobs = (-1,)  # Use all available cores
 
         # Define a custom callback to update the progress bar
         if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=self.n_estimators, desc="Training LightGBM")
+            progress_bar_helper = ProgressBarHelper(
+                total=self.n_estimators, desc="Training LightGBM"
+            )
 
-            progress_bar_helper = ProgressBarHelper(total=self.n_estimators // 4, desc="Training LightGBM")  # 25% increments
+            progress_bar_helper = ProgressBarHelper(
+                total=self.n_estimators // 4, desc="Training LightGBM"
+            )  # 25% increments
+
             def callback(env):
                 progress_bar_helper.update(1)
 
             self.model.fit(
-                X_train, y_train_encoded,
-                eval_set=[(X_test, y_test_encoded)],
-                callbacks=[callback]
+                X_train, y_train_encoded, eval_set=[(X_test, y_test_encoded)], callbacks=[callback]
             )
             progress_bar_helper.close()
         else:
             self.model.fit(X_train, y_train_encoded)
-
 
         train_time = time.time() - start_time
         print(f"LightGBM training completed in {train_time:.2f} seconds")
@@ -182,7 +195,9 @@ class GradientBoostingModel(BaseModel):
 
         # Simulate progress updates
         if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Gradient Boosting")  # 4 updates for 25% increments
+            progress_bar_helper = ProgressBarHelper(
+                total=4, desc="Training Gradient Boosting"
+            )  # 4 updates for 25% increments
             for _ in range(4):
                 self.model.fit(X_train, y_train_encoded)
                 progress_bar_helper.update(1)
@@ -243,7 +258,7 @@ class CatBoostModel(BaseModel):
 
         # Simulate progress updates
         if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training CatBoost") 
+            progress_bar_helper = ProgressBarHelper(total=4, desc="Training CatBoost")
             for _ in range(4):
                 self.model.fit(X_train, y_train_encoded)
                 progress_bar_helper.update(1)
@@ -293,7 +308,7 @@ class XGBoostModel(BaseModel):
 
         # Transform labels to continuous integers starting from 0
         y_train_encoded = self.label_encoder.fit_transform(y_train)
-        
+
         self.model = xgb.XGBClassifier(
             # n_estimators=self.n_estimators,
             # learning_rate=self.learning_rate,
