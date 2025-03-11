@@ -22,7 +22,7 @@ from src.Data.data_loader import (
 )
 from src.models import get_model
 from src.args import parse_arguments
-from src.feature_engineering import engineer_temporal_features
+from src.feature_engineering import engineer_features
 from src.models.ensemble_models import LIGHTGBM_PARAM_GRID  # Import the parameter grid
 
 
@@ -99,7 +99,7 @@ def main(args):
             SENSOR_COLUMNS_HOUSE_A,
             SENSOR_COLUMNS_HOUSE_B,
             ACTIVITY_COLUMNS,
-            engineer_temporal_features,
+            engineer_features,
         )
 
     if not args.no_training:

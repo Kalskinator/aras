@@ -2,6 +2,64 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import List, Union, Tuple, Optional
+from src.config import ACTIVITY_FREQUENT_MAPPING
+
+
+def map_activities_to_categories(df):
+    """
+    Maps detailed activities to high-level activity categories for a resident.
+
+    Args:
+        df: DataFrame containing activity data
+
+    Returns:
+        DataFrame with mapped activity categories for the specified resident
+    """
+    df_new = df.copy()
+
+    # Map activities to categories
+    df_new["Activity_R1"] = df_new["Activity_R1"].map(ACTIVITY_FREQUENT_MAPPING)
+    df_new["Activity_R2"] = df_new["Activity_R2"].map(ACTIVITY_FREQUENT_MAPPING)
+
+    return df_new
+
+
+def bin_data_by_time_window_with_activities(df, sensor_columns, window_size):
+    """
+    Bin the sensor data into time windows and include most common activity per bin.
+    Groups by both day and time to get proper activation counts.
+
+    Args:
+        df: DataFrame containing sensor and activity data
+        sensor_columns: List of sensor column names to bin
+        window_size: Size of time window in seconds to bin data into
+
+    Returns:
+        DataFrame with binned sensor values and most common activity per resident
+    """
+    df_new = df.copy()
+
+    # Create time bins
+    df_new["Time"] = (df_new["Time"] // window_size) * window_size
+
+    # Group by both day and time
+    grouped = df_new.groupby(["Day", "Time"])
+
+    # Handle sensor columns - sum values in each bin and rename with window size
+    sensor_data = grouped[sensor_columns].sum().reset_index()
+    sensor_data = sensor_data.rename(
+        columns={col: f"{col}_{window_size}s" for col in sensor_columns}
+    )
+
+    # Get most common activity for each resident in each time bin
+    r1_activities = grouped["Activity_R1"].agg(lambda x: x.mode()[0]).reset_index()
+    r2_activities = grouped["Activity_R2"].agg(lambda x: x.mode()[0]).reset_index()
+
+    # Merge sensor data with activities
+    result = sensor_data.merge(r1_activities, on=["Day", "Time"])
+    result = result.merge(r2_activities, on=["Day", "Time"])
+
+    return result
 
 
 def add_time_of_day_features(df):
@@ -93,10 +151,7 @@ def add_time_window_features(
     return df
 
 
-def engineer_temporal_features(
-    df: pd.DataFrame,
-    sensor_columns: List[str],
-) -> pd.DataFrame:
+def engineer_features(df: pd.DataFrame, sensor_columns: List[str]) -> pd.DataFrame:
     """
     Apply all temporal feature engineering techniques to the dataframe.
 
@@ -109,22 +164,27 @@ def engineer_temporal_features(
     """
     print("Performing feature engineering...")
 
-    print("Adding time of day features...")
+    print("Mapping activities to categories...")
+    df = map_activities_to_categories(df)
+
+    print("Binning sensor data by time window with activities...")
+    df = bin_data_by_time_window_with_activities(df, sensor_columns, 60)
+
     # Add time of day features
-    df = add_time_of_day_features(df)
+    # df = add_time_of_day_features(df)
 
-    print("Adding time window features...")
+    # print("Adding time window features...")
     # Add time window features
-    df = add_time_window_features(
-        df,
-        sensor_columns,
-        window_sizes=[30, 60, 300, 600],
-        aggregations=["mean", "std", "max", "min", "sum"],
-    )
+    # df = add_time_window_features(
+    #     df,
+    #     sensor_columns,
+    #     # window_sizes=[30, 60, 300, 600],
+    #     window_sizes=[600],
+    #     aggregations=["mean", "std", "max", "min", "sum"],
+    # )
 
-    print("Dropping original sensor columns...")
-    df = df.drop(sensor_columns, axis=1)
-
-    print(df.tail())
+    # print("Saving sample of engineered features to CSV...")
+    # df.to_csv("engineered_features.csv", index=False)
+    # print("Features sample saved successfully.")
 
     return df

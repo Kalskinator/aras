@@ -104,7 +104,7 @@ def prepare_data_with_engineering(
     sensor_columns_house_a,
     sensor_columns_house_b,
     activity_columns,
-    engineer_temporal_features,
+    engineer_features,
 ):
     """
     Prepare data for a specific resident with feature engineering.
@@ -135,22 +135,23 @@ def prepare_data_with_engineering(
     other_resident = "R1" if resident == "R2" else "R2"
     feature_columns = ["Time"] + sensor_columns + [f"Activity_{other_resident}"]
 
-    engineered_df = engineer_temporal_features(
+    engineered_df = engineer_features(
         df=df,
         sensor_columns=sensor_columns,
-        binary_sensor_columns=sensor_columns,
-        activity_column=f"Activity_{other_resident}",  # Use other resident's activity
     )
 
-    # Remove the activity columns from features
     X = engineered_df.drop(
-        [f"Activity_{other_resident}", f"Activity_{resident}"], axis=1, errors="ignore"
+        ["Day", f"Activity_{other_resident}", f"Activity_{resident}"],
+        axis=1,
     )
+
+    X.to_csv("final_features.csv", index=False)
 
     # Print the new feature set size
     print(f"Original feature count: {len(feature_columns)}")
     print(f"New feature count after engineering: {X.shape[1]}")
     print(f"Added {X.shape[1] - len(feature_columns)} new features")
+    print(f"Features: {X.columns.tolist()}")
 
     y = engineered_df[f"Activity_{resident}"]
 

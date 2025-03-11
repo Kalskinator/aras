@@ -86,6 +86,47 @@ ACTIVITY_MAPPING = {
     26: "Having Guest",
     27: "Changing Clothes",
 }
+"""
+Map frequent activities to their corresponding categories.
+
+1. Other = Other, Laundry, Cleaning
+2. Sleeping = Sleeping, Napping
+3. Eating = Preparing Breakfast, Having Breakfast, Preparing Lunch, Having Lunch, Preparing Dinner, Having Dinner, Having Snack
+4. Personal Hygiene = Having Shower, Toileting, Brushing Teeth, Shaving, Changing Clothes
+5. Going Out = Going Out
+6. Relaxing = Watching TV, Studying, Using Internet, Reading Book, Talking on the Phone, Talking on Phone, Listening to Music, Having Conversation, Having Guest
+
+
+"""
+ACTIVITY_FREQUENT_MAPPING = {
+    1: 1,  # Other
+    2: 5,  # Going Out
+    3: 3,  # Preparing Breakfast -> Eating
+    4: 3,  # Having Breakfast -> Eating
+    5: 3,  # Preparing Lunch -> Eating
+    6: 3,  # Having Lunch -> Eating
+    7: 3,  # Preparing Dinner -> Eating
+    8: 3,  # Having Dinner -> Eating
+    9: 1,  # Washing Dishes -> Other
+    10: 3,  # Having Snack -> Eating
+    11: 2,  # Sleeping
+    12: 6,  # Watching TV -> Relaxing
+    13: 6,  # Studying -> Relaxing
+    14: 4,  # Having Shower -> Personal Hygiene
+    15: 4,  # Toileting -> Personal Hygiene
+    16: 2,  # Napping -> Sleeping
+    17: 6,  # Using Internet -> Relaxing
+    18: 6,  # Reading Book -> Relaxing
+    19: 1,  # Laundry -> Other
+    20: 4,  # Shaving -> Personal Hygiene
+    21: 4,  # Brushing Teeth -> Personal Hygiene
+    22: 6,  # Talking on Phone -> Relaxing
+    23: 6,  # Listening to Music -> Relaxing
+    24: 1,  # Cleaning -> Other
+    25: 6,  # Having Conversation -> Relaxing
+    26: 6,  # Having Guest -> Relaxing
+    27: 4,  # Changing Clothes -> Personal Hygiene
+}
 
 MODEL_CATEGORIES = {
     "ensemble_models": ["lightgbm", "gradient_boosting", "catboost", "xgboost"],
