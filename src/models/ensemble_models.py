@@ -84,12 +84,9 @@ class LightGBMModel(BaseModel):
 
         # Define a custom callback to update the progress bar
         if progress_bar:
-<<<<<<< Updated upstream
             progress_bar_helper = ProgressBarHelper(total=self.n_estimators, desc="Training LightGBM")
 
-=======
             progress_bar_helper = ProgressBarHelper(total=self.n_estimators // 4, desc="Training LightGBM")  # 25% increments
->>>>>>> Stashed changes
             def callback(env):
                 progress_bar_helper.update(1)
 
