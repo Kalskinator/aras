@@ -1,6 +1,11 @@
 import sys
 import os
 import numpy as np
+<<<<<<< Updated upstream
+=======
+from tqdm import tqdm
+from utils.progress_bar_helper import ProgressBarHelper
+>>>>>>> Stashed changes
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -94,22 +99,40 @@ def main(args):
             ACTIVITY_COLUMNS,
             engineer_temporal_features,
         )
-    if not args.no_training:
-        results = {}
-        for model_name in args.models:
-            metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
-            results[model_name] = metrics
 
-            if args.save_models:
-                save_model_artifacts(
-                    model,
-                    model_name,
-                    args.resident,
-                    metrics,
-                    os.path.join("src", "artifacts", "models"),
-                )
+# Define hyperparameter grid for LightGBM
+    """     param_grid = {
+        'n_estimators': [50, 100, 200],
+        'learning_rate': [0.01, 0.1, 0.2],
+        'num_leaves': [31, 50, 100],
+        'max_depth': [-1, 10, 20],
+        'min_child_samples': [20, 50, 100],
+        'subsample': [0.6, 0.8, 1.0],
+        'colsample_bytree': [0.6, 0.8, 1.0]
+    } """
 
-        print_results(results)
+    results = {}
+    for model_name in args.models:
+        model = get_model(model_name)
+        # Commenting out the hyperparameter tuning call
+        # if model_name == "lightgbm":
+        #     best_params, best_score = model.tune_hyperparameters(X, y, param_grid, n_iter=25)
+        #     print(f"Best parameters for {model_name}: {best_params}")
+        #     print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
+
+        metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
+        results[model_name] = metrics
+
+        if args.save_models:
+            save_model_artifacts(
+                model,
+                model_name,
+                args.resident,
+                metrics,
+                os.path.join("src", "artifacts", "models"),
+            )
+
+    print_results(results)
 
 
 if __name__ == "__main__":
