@@ -6,7 +6,8 @@ from sklearn.metrics import precision_recall_fscore_support as score
 import time
 from .base_model import BaseModel
 import numpy as np
-from src.utils.progress_bar_helper import ProgressBarHelper
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 import logging
 
 
@@ -18,7 +19,7 @@ class SupportVectorMachineModel(BaseModel):
         self.kernel = kernel
         self.gamma = gamma
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
         logging.info(f"Training SVM model with Gamma={self.gamma} and C={self.C}...")
         start_time = time.time()
 
@@ -32,7 +33,7 @@ class SupportVectorMachineModel(BaseModel):
         self.model = SGDClassifier(
             loss="hinge",
             max_iter=1000,
-            verbose=0,  # Set to 0 to disable built-in verbosity when using our progress bar
+            verbose=0,
             tol=1e-3,
             random_state=random_state,
             early_stopping=True,
@@ -40,17 +41,7 @@ class SupportVectorMachineModel(BaseModel):
             n_iter_no_change=5,
         )
 
-        # Use progress bar for training
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training SVM")
-
-            # SGD is iterative, so we can update the progress bar as it trains
-            self.model.fit(X_train, y_train)
-            for i in range(4):
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
-        else:
-            self.model.fit(X_train, y_train)
+        self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
         logging.info(f"SVM training completed in {train_time:.2f} seconds")
@@ -69,6 +60,65 @@ class SupportVectorMachineModel(BaseModel):
             logging.info(classification_report(y_test, y_pred))
             logging.info("\nConfusion Matrix:")
             logging.info(confusion_matrix(y_test, y_pred))
+
+        return accuracy, precision, recall, fscore
+
+
+class PolynomialSVMModel(BaseModel):
+    def __init__(self, C=1.0, degree=2):
+        super().__init__("poly_svm")
+        self.C = C
+        self.degree = degree
+
+    def train(self, X, y, test_size=0.3, random_state=42):
+        print(f"Training Polynomial SVM model with degree={self.degree}...")
+        start_time = time.time()
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=random_state, stratify=y
+        )
+        print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
+
+        # Create a pipeline with preprocessing and model
+        self.model = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("poly", PolynomialFeatures(degree=self.degree, include_bias=False)),
+                (
+                    "svm",
+                    SGDClassifier(
+                        loss="hinge",
+                        alpha=1 / (self.C * X_train.shape[0]),  # Alpha is 1/(C*n_samples)
+                        max_iter=1000,
+                        tol=1e-3,
+                        random_state=random_state,
+                        early_stopping=True,
+                    ),
+                ),
+            ]
+        )
+
+        # Train the model
+        self.model.fit(X_train, y_train)
+
+        train_time = time.time() - start_time
+        print(f"Polynomial SVM training completed in {train_time:.2f} seconds")
+
+        return X_train, X_test, y_train, y_test
+
+    def evaluate(self, X_test, y_test, print_report=False):
+        """Evaluate the model on test data."""
+        print(f"\nEvaluating Polynomial SVM model...")
+        y_pred = self.model.predict(X_test)
+
+        accuracy = accuracy_score(y_test, y_pred)
+        precision, recall, fscore, support = score(y_test, y_pred)
+
+        if print_report:
+            print("\nClassification Report:")
+            print(classification_report(y_test, y_pred))
+            print("\nConfusion Matrix:")
+            print(confusion_matrix(y_test, y_pred))
 
         return accuracy, precision, recall, fscore
 

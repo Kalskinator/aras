@@ -1,0 +1,5 @@
+RANDOM_FOREST,House A - R1,House A - R2,House B - R1,House B - R2
+Accuracy ,0.8226,0.8807,0.9764,0.9614
+Precision,0.7272,0.8181,0.9584,0.8504
+Recall,0.6576,0.7606,0.8531,0.7722
+F1-Score,0.6799,0.785,0.8989,0.7971

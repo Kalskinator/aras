@@ -1,0 +1,5 @@
+poly_svm,House A - R1,House A - R2,House B - R1,House B - R2
+Accuracy ,0.626,0,0,0
+Precision,0.4286,0,0,0
+Recall,0.3654,0,0,0
+F1-Score,0.3563,0,0,0
