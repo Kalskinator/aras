@@ -11,7 +11,6 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 import logging
 
 
-# Maybe rename to SGDClassifierModel
 class SupportVectorMachineModel(BaseModel):
     def __init__(self, C=100, kernel="rbf", gamma=0.001):
         super().__init__("svm")
@@ -71,13 +70,15 @@ class PolynomialSVMModel(BaseModel):
         self.degree = degree
 
     def train(self, X, y, test_size=0.3, random_state=42):
-        print(f"Training Polynomial SVM model with degree={self.degree}...")
+        logging.info(f"Training Polynomial SVM model with degree={self.degree}...")
         start_time = time.time()
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
         )
-        print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
+        logging.info(
+            f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples"
+        )
 
         # Create a pipeline with preprocessing and model
         self.model = Pipeline(
@@ -102,23 +103,23 @@ class PolynomialSVMModel(BaseModel):
         self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
-        print(f"Polynomial SVM training completed in {train_time:.2f} seconds")
+        logging.info(f"Polynomial SVM training completed in {train_time:.2f} seconds")
 
         return X_train, X_test, y_train, y_test
 
     def evaluate(self, X_test, y_test, print_report=False):
         """Evaluate the model on test data."""
-        print(f"\nEvaluating Polynomial SVM model...")
+        logging.info(f"\nEvaluating Polynomial SVM model...")
         y_pred = self.model.predict(X_test)
 
         accuracy = accuracy_score(y_test, y_pred)
         precision, recall, fscore, support = score(y_test, y_pred)
 
         if print_report:
-            print("\nClassification Report:")
-            print(classification_report(y_test, y_pred))
-            print("\nConfusion Matrix:")
-            print(confusion_matrix(y_test, y_pred))
+            logging.info("\nClassification Report:")
+            logging.info(classification_report(y_test, y_pred))
+            logging.info("\nConfusion Matrix:")
+            logging.info(confusion_matrix(y_test, y_pred))
 
         return accuracy, precision, recall, fscore
 
@@ -130,9 +131,7 @@ class LogisticRegressionModel(BaseModel):
         self.solver = solver
 
     def train(self, X, y, test_size=0.3, random_state=42):
-        # logging.info(
-        #     f"Training Logistic Regression model with solver={self.solver}, C={self.C}..."
-        # )
+        logging.info(f"Training Logistic Regression model...")
         start_time = time.time()
 
         X_train, X_test, y_train, y_test = train_test_split(

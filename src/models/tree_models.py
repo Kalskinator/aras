@@ -33,17 +33,17 @@ class DecisionTreeModel(BaseModel):
         logging.info(f"Decision Tree training completed in {train_time:.2f} seconds")
         logging.info(f"Decision Tree Accuracy: {self.model.score(X_test, y_test):.4f}")
 
-        importances = self.model.feature_importances_
-        feature_names = X_train.columns
+        # importances = self.model.feature_importances_
+        # feature_names = X_train.columns
 
-        indices = np.argsort(importances)[::-1]
+        # indices = np.argsort(importances)[::-1]
 
-        # Plot
-        plt.figure(figsize=(10, 5))
-        plt.title("Feature Importance Decision Tree Model (Gini)")
-        plt.bar(range(len(importances)), importances[indices], align="center")
-        plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
-        plt.show()
+        # # Plot
+        # plt.figure(figsize=(10, 5))
+        # plt.title("Feature Importance Decision Tree Model (Gini)")
+        # plt.bar(range(len(importances)), importances[indices], align="center")
+        # plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
+        # plt.show()
 
         return X_train, X_test, y_train, y_test
 
@@ -91,19 +91,23 @@ class RandomForestModel(BaseModel):
         self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
+
+        # logging.info(f"Random Forest training completed in {train_time:.2f} seconds")
+        # logging.info(f"Random Forest Accuracy: {self.model.score(X_test, y_test):.4f}")
+
+        # importances = self.model.feature_importances_
+        # feature_names = X_train.columns
+
+        # indices = np.argsort(importances)[::-1]
+
+        # plt.figure(figsize=(10, 5))
+        # plt.title("Feature Importance Random Forest Model (Gini)")
+        # plt.bar(range(len(importances)), importances[indices], align="center")
+        # plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
+        # plt.show()
+
         logging.info(f"Random Forest training completed in {train_time:.2f} seconds")
         logging.info(f"Random Forest Accuracy: {self.model.score(X_test, y_test):.4f}")
-
-        importances = self.model.feature_importances_
-        feature_names = X_train.columns
-
-        indices = np.argsort(importances)[::-1]
-
-        plt.figure(figsize=(10, 5))
-        plt.title("Feature Importance Random Forest Model (Gini)")
-        plt.bar(range(len(importances)), importances[indices], align="center")
-        plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
-        plt.show()
 
         return X_train, X_test, y_train, y_test
 

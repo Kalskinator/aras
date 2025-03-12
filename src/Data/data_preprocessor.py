@@ -39,7 +39,7 @@ class DataPreprocessor:
 
         other_resident = "R1" if resident == "R2" else "R2"
         feature_columns = ["Time"] + sensor_columns + [f"Activity_{other_resident}"]
-        logging.info(f"Feature columns: {feature_columns}")
+        logging.debug(f"Feature columns: {feature_columns}")
 
         X = df[feature_columns]
         y = df[f"Activity_{resident}"]
@@ -83,7 +83,7 @@ class DataPreprocessor:
             axis=1,
         )
 
-        X.to_csv("final_features.csv", index=False)
+        # X.to_csv("final_features.csv", index=False)
 
         # Print the new feature set size
         logging.info(f"Original feature count: {len(feature_columns)}")
