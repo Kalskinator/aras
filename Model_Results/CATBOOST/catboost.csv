@@ -1,0 +1,5 @@
+catboost,House A - R1,House A - R2,House B - R1,House B - R2
+Accuracy ,0.7677,0,0,0
+Precision,0.7094,0,0,0
+Recall,0.4827,0,0,0
+F1-Score,0.5243,0,0,0

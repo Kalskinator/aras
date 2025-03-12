@@ -5,7 +5,6 @@ from sklearn.metrics import precision_recall_fscore_support as score
 import time
 from .base_model import BaseModel
 import numpy as np
-from src.utils.progress_bar_helper import ProgressBarHelper
 import logging
 
 
@@ -16,7 +15,7 @@ class KNearestNeighborsModel(BaseModel):
         self.metric = metric
         self.algorithm = algorithm
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
         logging.info(f"Training KNN model with {self.n_neighbors} neighbors...")
         start_time = time.time()
 
@@ -35,12 +34,6 @@ class KNearestNeighborsModel(BaseModel):
         )
 
         self.model.fit(X_train, y_train)
-
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training KNN")
-            for _ in range(4):
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
 
         train_time = time.time() - start_time
         logging.info(f"KNN training completed in {train_time:.2f} seconds")

@@ -1,5 +1,4 @@
 from sklearn.svm import SVC
-
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
@@ -9,7 +8,6 @@ from .base_model import BaseModel
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from src.utils.progress_bar_helper import ProgressBarHelper
 import logging
 
 
@@ -21,7 +19,7 @@ class SupportVectorMachineModel(BaseModel):
         self.kernel = kernel
         self.gamma = gamma
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
         logging.info(f"Training SVM model with Gamma={self.gamma} and C={self.C}...")
         start_time = time.time()
 
@@ -35,7 +33,7 @@ class SupportVectorMachineModel(BaseModel):
         self.model = SGDClassifier(
             loss="hinge",
             max_iter=1000,
-            verbose=0,  # Set to 0 to disable built-in verbosity when using our progress bar
+            verbose=0,
             tol=1e-3,
             random_state=random_state,
             early_stopping=True,
@@ -44,12 +42,6 @@ class SupportVectorMachineModel(BaseModel):
         )
 
         self.model.fit(X_train, y_train)
-
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training SVM")
-            for i in range(4):
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
 
         train_time = time.time() - start_time
         logging.info(f"SVM training completed in {train_time:.2f} seconds")
@@ -78,7 +70,7 @@ class PolynomialSVMModel(BaseModel):
         self.C = C
         self.degree = degree
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
         print(f"Training Polynomial SVM model with degree={self.degree}...")
         start_time = time.time()
 
@@ -108,13 +100,6 @@ class PolynomialSVMModel(BaseModel):
 
         # Train the model
         self.model.fit(X_train, y_train)
-
-        # Update progress bar if provided
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Poly SVM")
-            for _ in range(4):
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
 
         train_time = time.time() - start_time
         print(f"Polynomial SVM training completed in {train_time:.2f} seconds")

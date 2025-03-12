@@ -6,7 +6,6 @@ from sklearn.metrics import precision_recall_fscore_support as score
 import time
 from tqdm import tqdm
 from .base_model import BaseModel
-from src.utils.progress_bar_helper import ProgressBarHelper
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
@@ -16,7 +15,7 @@ class DecisionTreeModel(BaseModel):
     def __init__(self):
         super().__init__("decision_tree")
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
         start_time = time.time()
 
         X_train, X_test, y_train, y_test = train_test_split(
@@ -29,15 +28,6 @@ class DecisionTreeModel(BaseModel):
         self.model = DecisionTreeClassifier(random_state=random_state, criterion="gini")
 
         self.model.fit(X_train, y_train)
-
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Decision Tree")
-            progress_bar_helper = ProgressBarHelper(
-                total=4, desc="Training Decision Tree"
-            )  # 4 updates for 25% increments
-            for _ in range(4):
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
 
         train_time = time.time() - start_time
         logging.info(f"Decision Tree training completed in {train_time:.2f} seconds")
@@ -79,7 +69,7 @@ class RandomForestModel(BaseModel):
         self.n_estimators = n_estimators
         self.max_depth = max_depth
 
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
+    def train(self, X, y, test_size=0.3, random_state=42):
         start_time = time.time()
 
         # Split the data
@@ -99,21 +89,6 @@ class RandomForestModel(BaseModel):
         )
 
         self.model.fit(X_train, y_train)
-
-        if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Random Forest")
-            for _ in range(4):
-                increment = max(
-                    1, self.n_estimators // 4
-                )  # Calculate increment value for 25% increments
-            progress_bar_helper = ProgressBarHelper(
-                total=self.n_estimators // increment, desc="Training Random Forest"
-            )
-            for i in range(increment, self.n_estimators + 1, increment):
-                self.model.set_params(n_estimators=i)
-                self.model.fit(X_train, y_train)
-                progress_bar_helper.update(1)
-            progress_bar_helper.close()
 
         train_time = time.time() - start_time
         logging.info(f"Random Forest training completed in {train_time:.2f} seconds")

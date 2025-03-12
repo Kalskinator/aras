@@ -5,7 +5,6 @@ import logging
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 from tqdm import tqdm
-from src.utils.progress_bar_helper import ProgressBarHelper
 
 from src.utils.logging_utils import (
     setup_logger,
@@ -20,7 +19,7 @@ from src.models import get_model
 from src.args import parse_arguments
 from src.Data.data_preprocessor import DataPreprocessor
 from src.feature_engineering import FeatureEngineering
-from src.models.ensemble_models import LIGHTGBM_PARAM_GRID  # Import the parameter grid
+from src.utils.results_saver import ResultsSaver
 
 
 def train_and_evaluate_model(model_name, X, y, print_report=False, house=None, resident=None):
@@ -29,16 +28,13 @@ def train_and_evaluate_model(model_name, X, y, print_report=False, house=None, r
 
     model = get_model(model_name)
 
-    # Create a progress bar for the training process
-    progress_bar = ProgressBarHelper(total=4, desc=f"Training {model_name}")
-    X_train, X_test, y_train, y_test = model.train(X, y, progress_bar=progress_bar)
-    progress_bar.close()
+    # Train the model (no progress bar)
+    X_train, X_test, y_train, y_test = model.train(X, y)
 
     accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=print_report)
 
     # Save results if house and resident are provided
     if house and resident:
-
         # Get the appropriate metric name for the model
         metric_name = model_name
         if model_name == "knn":
@@ -84,15 +80,8 @@ def basic_training(
 
     for model_name in model_names:
         model = get_model(model_name)
-        # Use the imported parameter grid
-        if model_name == "lightgbm":
-            best_params, best_score = model.tune_hyperparameters(
-                X, y, LIGHTGBM_PARAM_GRID, n_iter=25
-            )
-            logging.info(f"Best parameters for {model_name}: {best_params}")
-            logging.info(f"Best cross-validation score for {model_name}: {best_score:.4f}")
 
-        metrics, model = train_and_evaluate_model(model_name, X, y, print_report)
+        metrics, model = train_and_evaluate_model(model_name, X, y, print_report, house, resident)
         results[model_name] = metrics
 
         if save_models:
@@ -168,19 +157,13 @@ def cross_validate_models(
         model = get_model(model_name)
 
         # Fit the model on the training resident's data
-        # progress_bar = ProgressBarHelper(total=4, desc=f"Training {model_name}")
         if hasattr(model, "model") and model.model is None:
             # If the model needs to be initialized
             # We need to call train but ignore the train/test split it creates
             _, _, _, _ = model.train(X_train, y_train)
-            #  progress_bar=progress_bar
-            # )
         else:
             # If the model is already initialized, just fit it
             model.model.fit(X_train, y_train)
-            # for _ in range(4):  # Just to show progress
-            #     progress_bar.update(1)
-            # progress_bar.close()
 
         # Evaluate on the validation resident's data
         accuracy, precision, recall, fscore = model.evaluate(
@@ -265,7 +248,6 @@ def main(args):
     if not args.no_training:
         results = {}
         if args.training == "default":
-
             results = basic_training(
                 args.models,
                 args.resident,
