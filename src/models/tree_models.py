@@ -51,7 +51,7 @@ class DecisionTreeModel(BaseModel):
 
         # Plot
         plt.figure(figsize=(10, 5))
-        plt.title("Feature Importance (Gini)")
+        plt.title("Feature Importance Decision Tree Model (Gini)")
         plt.bar(range(len(importances)), importances[indices], align="center")
         plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
         plt.show()
@@ -125,7 +125,7 @@ class RandomForestModel(BaseModel):
         indices = np.argsort(importances)[::-1]
 
         plt.figure(figsize=(10, 5))
-        plt.title("Feature Importance (Gini)")
+        plt.title("Feature Importance Random Forest Model (Gini)")
         plt.bar(range(len(importances)), importances[indices], align="center")
         plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
         plt.show()
