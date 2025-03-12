@@ -1,10 +1,19 @@
 import sys
 import os
+import logging
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 from tqdm import tqdm
 from src.utils.progress_bar_helper import ProgressBarHelper
+from src.utils.logging_utils import (
+    setup_logger,
+    log_section,
+    log_results,
+    log_parameters,
+    disable_third_party_loggers,
+    enable_debug_mode,
+)
 
 from src.models import get_model
 from src.args import parse_arguments
@@ -15,7 +24,7 @@ from src.models.ensemble_models import LIGHTGBM_PARAM_GRID  # Import the paramet
 
 def train_and_evaluate_model(model_name, X, y, print_report=False):
     """Train and evaluate a single model."""
-    print(f"\n{'-'*40}\nTraining {model_name}...\n{'-'*40}")
+    log_section(f"Training {model_name}...")
 
     model = get_model(model_name)
 
@@ -61,8 +70,8 @@ def basic_training(
             best_params, best_score = model.tune_hyperparameters(
                 X, y, LIGHTGBM_PARAM_GRID, n_iter=25
             )
-            print(f"Best parameters for {model_name}: {best_params}")
-            print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
+            logging.info(f"Best parameters for {model_name}: {best_params}")
+            logging.info(f"Best cross-validation score for {model_name}: {best_score:.4f}")
 
         metrics, model = train_and_evaluate_model(model_name, X, y, print_report)
         results[model_name] = metrics
@@ -104,14 +113,14 @@ def cross_validate_models(
     Returns:
         Dictionary of model results
     """
-    print(f"\n{'-'*40}\nPerforming Resident-Based Cross-Validation\n{'-'*40}")
+    log_section("Performing Resident-Based Cross-Validation")
     results = {}
 
     # Get the other resident ID for training
     other_resident = "R1" if resident == "R2" else "R2"
-    print(f"Training on {resident}'s data, validating on {other_resident}'s data")
+    logging.info(f"Training on {resident}'s data, validating on {other_resident}'s data")
 
-    print(f"Loading training data from {resident}...")
+    logging.info(f"Loading training data from {resident}...")
     if not feature_engineering:
         X_train, y_train = DataPreprocessor.prepare_data(resident, "all", house)
     else:
@@ -123,7 +132,7 @@ def cross_validate_models(
         )
 
     # Load data for the validation resident (the target resident)
-    print(f"Loading validation data from {other_resident}...")
+    logging.info(f"Loading validation data from {other_resident}...")
     if not feature_engineering:
         X_val, y_val = DataPreprocessor.prepare_data(other_resident, "all", house)
     else:
@@ -136,7 +145,7 @@ def cross_validate_models(
 
     # For each model, train on one resident and validate on the other
     for model_name in model_names:
-        print(f"\n{'-'*40}\nTraining {model_name} on {resident}'s data...\n{'-'*40}")
+        log_section(f"Training {model_name} on {resident}'s data...")
         model = get_model(model_name)
 
         # Fit the model on the training resident's data
@@ -201,19 +210,37 @@ def save_model_artifacts(model, model_name, resident, metrics, artifacts_dir):
 
 def print_results(results):
     """Print summary of all model results."""
-    print(f"\n{'-'*40}\nResults summary\n{'-'*40}")
+    log_section("Results Summary")
     for model_name, metrics in results.items():
-        print(f"\n{model_name}:")
-        print(f"  Accuracy:  {metrics['accuracy']:.4f}")
-        print(f"  Precision: {metrics['precision']:.4f}")
-        print(f"  Recall:    {metrics['recall']:.4f}")
-        print(f"  F1-Score:  {metrics['fscore']:.4f}")
+        log_results(model_name, metrics)
 
 
 def main(args):
-    print(f"Selected model: {args.models}")
-    print(f"Selected resident: {args.resident}")
-    print(f"Selected house: {args.house}")
+    # Set up logging
+    setup_logger(
+        log_level=logging.INFO,
+        console_output=True,
+    )
+
+    # Enable debug mode if requested
+    if args.debug:
+        enable_debug_mode()
+
+    # Disable verbose logging from third party libraries
+    # disable_third_party_loggers()
+
+    # Log experiment parameters
+    parameters = {
+        "models": args.models,
+        "resident": args.resident,
+        "house": args.house,
+        "data": args.data,
+        "feature_engineering": args.feature_engineering,
+        "training_method": args.training,
+        "save_models": args.save_models,
+        "debug": args.debug,
+    }
+    log_parameters(parameters)
 
     # Prepare data
     if not args.no_training:

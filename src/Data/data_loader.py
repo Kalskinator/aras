@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 
 
 class DataLoader:
@@ -15,11 +16,11 @@ class DataLoader:
     def load_all_data(data_dir, names):
         all_data = []
         for day_file in sorted(data_dir.glob("DAY_*.txt"), key=lambda x: int(x.stem.split("_")[1])):
-            # print(f"Loading {day_file}")
+            # logging.debug(f"Loading {day_file}")
             day_data = DataLoader.load_day_data(day_file, names)
             day_data["Day"] = int(day_file.stem.split("_")[1])  # Add day number
             all_data.append(day_data)
-        print(f"Loaded {len(all_data)} days of data")
+        logging.info(f"Loaded {len(all_data)} days of data")
         return pd.concat(all_data, ignore_index=True)
 
     @staticmethod
@@ -48,8 +49,8 @@ class DataLoader:
         val_data = df[(df["Day"] > train_end_day) & (df["Day"] <= val_end_day)]
         test_data = df[df["Day"] > val_end_day]
 
-        print(f"Training data: Days 1-{train_end_day}")
-        print(f"Validation data: Days {train_end_day+1}-{val_end_day}")
-        print(f"Test data: Days {val_end_day+1}-{val_end_day+test_days}")
+        logging.info(f"Training data: Days 1-{train_end_day}")
+        logging.info(f"Validation data: Days {train_end_day+1}-{val_end_day}")
+        logging.info(f"Test data: Days {val_end_day+1}-{val_end_day+test_days}")
 
         return train_data, val_data, test_data

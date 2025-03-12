@@ -122,6 +122,12 @@ def parse_arguments():
         help="Print the classification report",
     )
 
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode with more verbose logging",
+    )
+
     # Parse arguments
     args = parser.parse_args()
 

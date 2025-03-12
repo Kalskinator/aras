@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import List, Union, Tuple, Optional
+import logging
 from src.config import ACTIVITY_FREQUENT_MAPPING
 
 
@@ -162,16 +163,18 @@ class FeatureEngineering:
         Returns:
             DataFrame with all temporal features added
         """
-        print("Performing feature engineering...")
+        logging.info("Performing feature engineering...")
 
-        print("Mapping activities to categories...")
+        logging.info("Mapping activities to categories...")
         df = FeatureEngineering.map_activities_to_categories(df)
 
-        print("Binning sensor data by time window with activities...")
+        logging.info("Binning sensor data by time window with activities...")
         df = FeatureEngineering.bin_data_by_time_window_with_activities(df, sensor_columns, 60)
 
-        # Add time of day features
-        # df = add_time_of_day_features(df)
+        # print("Adding time of day features...")
+        # df = FeatureEngineering.add_time_of_day_features(df)
+
+        df.drop(columns=["Time"], inplace=True)
 
         # print("Adding time window features...")
         # Add time window features
