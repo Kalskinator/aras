@@ -10,6 +10,7 @@ from .base_model import BaseModel
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 from src.utils.progress_bar_helper import ProgressBarHelper
+import logging
 
 
 # Best parameters for lightgbm and R1: {'subsample': 1.0, 'num_leaves': 100, 'n_estimators': 50, 'min_child_samples': 100, 'max_depth': -1, 'learning_rate': 0.1, 'colsample_bytree': 0.6}
@@ -43,7 +44,9 @@ class LightGBMModel(BaseModel):
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
         )
-        print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
+        logging.info(
+            f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples"
+        )
 
         # Fit the label encoder on both training and validation labels
         self.label_encoder.fit(y)
@@ -111,13 +114,13 @@ class LightGBMModel(BaseModel):
             self.model.fit(X_train, y_train_encoded)
 
         train_time = time.time() - start_time
-        print(f"LightGBM training completed in {train_time:.2f} seconds")
-        print(f"LightGBM Accuracy: {self.model.score(X_test, y_test_encoded):.4f}")
+        logging.info(f"LightGBM training completed in {train_time:.2f} seconds")
+        logging.info(f"LightGBM Accuracy: {self.model.score(X_test, y_test_encoded):.4f}")
 
         return X_train, X_test, y_train, y_test
 
     def evaluate(self, X_test, y_test, print_report=False):
-        print(f"\nEvaluating LightGBM model...")
+        logging.info(f"\nEvaluating LightGBM model...")
         y_pred_encoded = self.model.predict(X_test)
         # Transform predictions back to original labels
         y_pred = self.label_encoder.inverse_transform(y_pred_encoded)
@@ -126,10 +129,10 @@ class LightGBMModel(BaseModel):
         precision, recall, fscore, support = score(y_test, y_pred, zero_division=0)
 
         if print_report:
-            print("\nClassification Report:")
-            print(classification_report(y_test, y_pred))
-            print("\nConfusion Matrix:")
-            print(confusion_matrix(y_test, y_pred))
+            logging.info("\nClassification Report:")
+            logging.info(classification_report(y_test, y_pred))
+            logging.info("\nConfusion Matrix:")
+            logging.info(confusion_matrix(y_test, y_pred))
 
         return accuracy, precision, recall, fscore
 
@@ -180,7 +183,9 @@ class GradientBoostingModel(BaseModel):
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
         )
-        print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
+        logging.info(
+            f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples"
+        )
 
         # Transform labels to continuous integers starting from 0
         y_train_encoded = self.label_encoder.fit_transform(y_train)
@@ -205,12 +210,12 @@ class GradientBoostingModel(BaseModel):
             self.model.fit(X_train, y_train_encoded)
 
         train_time = time.time() - start_time
-        print(f"Gradient Boosting training completed in {train_time:.2f} seconds")
+        logging.info(f"Gradient Boosting training completed in {train_time:.2f} seconds")
 
         return X_train, X_test, y_train, y_test
 
     def evaluate(self, X_test, y_test, print_report=False):
-        print(f"\nEvaluating Gradient Boosting model...")
+        logging.info(f"\nEvaluating Gradient Boosting model...")
         y_pred_encoded = self.model.predict(X_test)
         # Transform predictions back to original labels
         y_pred = self.label_encoder.inverse_transform(y_pred_encoded)
@@ -219,10 +224,10 @@ class GradientBoostingModel(BaseModel):
         precision, recall, fscore, support = score(y_test, y_pred, zero_division=0)
 
         if print_report:
-            print("\nClassification Report:")
-            print(classification_report(y_test, y_pred))
-            print("\nConfusion Matrix:")
-            print(confusion_matrix(y_test, y_pred))
+            logging.info("\nClassification Report:")
+            logging.info(classification_report(y_test, y_pred))
+            logging.info("\nConfusion Matrix:")
+            logging.info(confusion_matrix(y_test, y_pred))
 
         return accuracy, precision, recall, fscore
 
@@ -241,7 +246,9 @@ class CatBoostModel(BaseModel):
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
         )
-        print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
+        logging.info(
+            f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples"
+        )
 
         # Transform labels to continuous integers starting from 0
         y_train_encoded = self.label_encoder.fit_transform(y_train)
@@ -266,12 +273,12 @@ class CatBoostModel(BaseModel):
             self.model.fit(X_train, y_train_encoded)
 
         train_time = time.time() - start_time
-        print(f"CatBoost training completed in {train_time:.2f} seconds")
+        logging.info(f"CatBoost training completed in {train_time:.2f} seconds")
 
         return X_train, X_test, y_train, y_test
 
     def evaluate(self, X_test, y_test, print_report=False):
-        print(f"\nEvaluating CatBoost model...")
+        logging.info(f"\nEvaluating CatBoost model...")
         y_pred_encoded = self.model.predict(X_test)
         # Transform predictions back to original labels
         y_pred = self.label_encoder.inverse_transform(y_pred_encoded)
@@ -280,10 +287,10 @@ class CatBoostModel(BaseModel):
         precision, recall, fscore, support = score(y_test, y_pred, zero_division=0)
 
         if print_report:
-            print("\nClassification Report:")
-            print(classification_report(y_test, y_pred))
-            print("\nConfusion Matrix:")
-            print(confusion_matrix(y_test, y_pred))
+            logging.info("\nClassification Report:")
+            logging.info(classification_report(y_test, y_pred))
+            logging.info("\nConfusion Matrix:")
+            logging.info(confusion_matrix(y_test, y_pred))
 
         return accuracy, precision, recall, fscore
 
@@ -303,7 +310,9 @@ class XGBoostModel(BaseModel):
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
         )
-        print(f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples")
+        logging.info(
+            f"Training on {X_train.shape[0]} samples, testing on {X_test.shape[0]} samples"
+        )
 
         # Transform labels to continuous integers starting from 0
         y_train_encoded = self.label_encoder.fit_transform(y_train)
@@ -318,12 +327,12 @@ class XGBoostModel(BaseModel):
         self.model.fit(X_train, y_train_encoded)
 
         train_time = time.time() - start_time
-        print(f"XGBoost training completed in {train_time:.2f} seconds")
+        logging.info(f"XGBoost training completed in {train_time:.2f} seconds")
 
         return X_train, X_test, y_train, y_test
 
     def evaluate(self, X_test, y_test, print_report=False):
-        print(f"\nEvaluating XGBoost model...")
+        logging.info(f"\nEvaluating XGBoost model...")
         y_pred_encoded = self.model.predict(X_test)
         # Transform predictions back to original labels
         y_pred = self.label_encoder.inverse_transform(y_pred_encoded)
@@ -332,9 +341,9 @@ class XGBoostModel(BaseModel):
         precision, recall, fscore, support = score(y_test, y_pred)
 
         if print_report:
-            print("\nClassification Report:")
-            print(classification_report(y_test, y_pred))
-            print("\nConfusion Matrix:")
-            print(confusion_matrix(y_test, y_pred))
+            logging.info("\nClassification Report:")
+            logging.info(classification_report(y_test, y_pred))
+            logging.info("\nConfusion Matrix:")
+            logging.info(confusion_matrix(y_test, y_pred))
 
         return accuracy, precision, recall, fscore
