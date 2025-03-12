@@ -109,27 +109,26 @@ def cross_validate_models(
 
     # Get the other resident ID for training
     other_resident = "R1" if resident == "R2" else "R2"
-    print(f"Training on {other_resident}'s data, validating on {resident}'s data")
+    print(f"Training on {resident}'s data, validating on {other_resident}'s data")
 
-    # Load data for the training resident (the other resident)
-    print(f"Loading training data from {other_resident}...")
+    print(f"Loading training data from {resident}...")
     if not feature_engineering:
-        X_train, y_train = DataPreprocessor.prepare_data(other_resident, "all", house)
+        X_train, y_train = DataPreprocessor.prepare_data(resident, "all", house)
     else:
         X_train, y_train = DataPreprocessor.prepare_data_with_engineering(
-            other_resident,
+            resident,
             data,
             house,
             FeatureEngineering.engineer_features,
         )
 
     # Load data for the validation resident (the target resident)
-    print(f"Loading validation data from {resident}...")
+    print(f"Loading validation data from {other_resident}...")
     if not feature_engineering:
-        X_val, y_val = DataPreprocessor.prepare_data(resident, "all", house)
+        X_val, y_val = DataPreprocessor.prepare_data(other_resident, "all", house)
     else:
         X_val, y_val = DataPreprocessor.prepare_data_with_engineering(
-            resident,
+            other_resident,
             data,
             house,
             FeatureEngineering.engineer_features,
@@ -137,7 +136,7 @@ def cross_validate_models(
 
     # For each model, train on one resident and validate on the other
     for model_name in model_names:
-        print(f"\n{'-'*40}\nTraining {model_name} on {other_resident}'s data...\n{'-'*40}")
+        print(f"\n{'-'*40}\nTraining {model_name} on {resident}'s data...\n{'-'*40}")
         model = get_model(model_name)
 
         # Fit the model on the training resident's data
@@ -171,7 +170,7 @@ def cross_validate_models(
 
         # Save model if requested
         if save_models:
-            model_suffix = f"{model_name}_{other_resident}_to_{resident}"
+            model_suffix = f"{model_name}_{resident}_to_{other_resident}"
             model_dir = os.path.join("src", "artifacts", "models", model_suffix)
             os.makedirs(model_dir, exist_ok=True)
 
