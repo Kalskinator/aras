@@ -31,17 +31,13 @@ class KNearestNeighborsModel(BaseModel):
             n_jobs=-1,  # Use all available cores
         )
 
-        # Simulate progress updates since KNN training is typically fast
+        self.model.fit(X_train, y_train)
+
         if progress_bar:
             progress_bar_helper = ProgressBarHelper(total=4, desc="Training KNN")
             for _ in range(4):
-                # For KNN, fitting happens once, so we simulate progress
-                if _ == 0:
-                    self.model.fit(X_train, y_train)
                 progress_bar_helper.update(1)
             progress_bar_helper.close()
-        else:
-            self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
         print(f"KNN training completed in {train_time:.2f} seconds")

@@ -24,15 +24,13 @@ class DecisionTreeModel(BaseModel):
 
         self.model = DecisionTreeClassifier(random_state=random_state, criterion="gini")
 
-        # Simulate progress updates
+        self.model.fit(X_train, y_train)
+
         if progress_bar:
-            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Decision Tree")  # 4 updates for 25% increments
+            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Decision Tree")
             for _ in range(4):
-                self.model.fit(X_train, y_train)
                 progress_bar_helper.update(1)
             progress_bar_helper.close()
-        else:
-            self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
         print(f"Decision Tree training completed in {train_time:.2f} seconds")
@@ -76,20 +74,15 @@ class RandomForestModel(BaseModel):
             max_depth=self.max_depth,
             random_state=random_state,
             n_jobs=-1,  # Use all available cores
-            warm_start=True  # Enable warm start to fit incrementally
         )
 
-        # Fit the model incrementally and update progress bar
+        self.model.fit(X_train, y_train)
+
         if progress_bar:
-            increment = max(1, self.n_estimators // 4)  # Calculate increment value for 25% increments
-            progress_bar_helper = ProgressBarHelper(total=self.n_estimators // increment, desc="Training Random Forest")
-            for i in range(increment, self.n_estimators + 1, increment):
-                self.model.set_params(n_estimators=i)
-                self.model.fit(X_train, y_train)
+            progress_bar_helper = ProgressBarHelper(total=4, desc="Training Random Forest")
+            for _ in range(4):
                 progress_bar_helper.update(1)
             progress_bar_helper.close()
-        else:
-            self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time
         print(f"Random Forest training completed in {train_time:.2f} seconds")
