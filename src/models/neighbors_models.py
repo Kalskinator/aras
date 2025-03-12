@@ -9,7 +9,7 @@ from src.utils.progress_bar_helper import ProgressBarHelper
 
 
 class KNearestNeighborsModel(BaseModel):
-    def __init__(self, n_neighbors=5, metric="euclidean", algorithm="kd_tree"):
+    def __init__(self, n_neighbors=5, metric="manhattan", algorithm="kd_tree"):
         super().__init__("knn")
         self.n_neighbors = n_neighbors
         self.metric = metric

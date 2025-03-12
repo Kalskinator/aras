@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import numpy as np
 from tqdm import tqdm
 from src.utils.progress_bar_helper import ProgressBarHelper
+from src.utils.results_saver import ResultsSaver
 
 from src.config import (
     DATA_DIR_HOUSE_A,
@@ -20,7 +21,7 @@ from src.feature_engineering import FeatureEngineering
 from src.models.ensemble_models import LIGHTGBM_PARAM_GRID  # Import the parameter grid
 
 
-def train_and_evaluate_model(model_name, X, y, print_report=False):
+def train_and_evaluate_model(model_name, X, y, print_report=False, house=None, resident=None):
     """Train and evaluate a single model."""
     print(f"\n{'-'*40}\nTraining {model_name}...\n{'-'*40}")
 
@@ -32,6 +33,24 @@ def train_and_evaluate_model(model_name, X, y, print_report=False):
     progress_bar.close()
 
     accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=print_report)
+
+    # Save results if house and resident are provided
+    if house and resident:
+
+        # Get the appropriate metric name for the model
+        metric_name = model_name
+        if model_name == "knn":
+            metric_name = model.metric.capitalize()
+
+        # Save the results
+        results_saver = ResultsSaver("Model_Results")
+        results_saver.update_results(
+            model_name=model_name.upper(),
+            metric_name=metric_name,
+            house=house,
+            resident=resident,
+            results=(accuracy, np.mean(precision), np.mean(recall), np.mean(fscore)),
+        )
 
     return {
         "accuracy": accuracy,
@@ -109,7 +128,9 @@ def main(args):
                     print(f"Best parameters for {model_name}: {best_params}")
                     print(f"Best cross-validation score for {model_name}: {best_score:.4f}")
 
-                metrics, model = train_and_evaluate_model(model_name, X, y, args.print_report)
+                metrics, model = train_and_evaluate_model(
+                    model_name, X, y, args.print_report, house=args.house, resident=args.resident
+                )
                 results[model_name] = metrics
 
                 if args.save_models:
