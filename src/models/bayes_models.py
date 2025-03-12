@@ -35,7 +35,7 @@ class GaussianNBModel(BaseModel):
         y_pred = self.model.predict(X_test)
 
         accuracy = accuracy_score(y_test, y_pred)
-        precision, recall, fscore, support = score(y_test, y_pred)
+        precision, recall, fscore, support = score(y_test, y_pred, zero_division=0)
 
         if print_report:
             logging.info("\nClassification Report:")
