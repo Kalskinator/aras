@@ -176,3 +176,4 @@ shap_force_plot.html
 
 artifacts/
 catboost_info/
+logs/
