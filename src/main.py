@@ -227,7 +227,7 @@ def main(args):
         enable_debug_mode()
 
     # Disable verbose logging from third party libraries
-    # disable_third_party_loggers()
+    disable_third_party_loggers()
 
     # Log experiment parameters
     parameters = {
