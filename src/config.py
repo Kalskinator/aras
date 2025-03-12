@@ -129,6 +129,18 @@ ACTIVITY_FREQUENT_MAPPING = {
 }
 
 MODEL_CATEGORIES = {
+    "all": [
+        "knn",
+        "svm",
+        "decision_tree",
+        "logistic_regression",
+        "random_forest",
+        "lightgbm",
+        "gradient_boosting",
+        "catboost",
+        "xgboost",
+        "gaussiannb",
+    ],
     "ensemble_models": ["lightgbm", "gradient_boosting", "catboost", "xgboost"],
     "bayes_models": ["gaussiannb"],
     "linear_models": ["svm", "logistic_regression"],
