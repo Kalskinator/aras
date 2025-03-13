@@ -11,9 +11,7 @@ class BaseModel(ABC):
         self.model = None
 
     @abstractmethod
-    def train(self, X, y, test_size=0.3, random_state=42, progress_bar=None):
-        if progress_bar:
-                progress_bar.update(1)
+    def train(self, X, y, test_size=0.3, random_state=42):
         pass
 
     @abstractmethod
