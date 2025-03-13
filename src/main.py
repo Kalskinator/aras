@@ -20,8 +20,8 @@ from src.args import parse_arguments
 from src.Data.data_preprocessor import DataPreprocessor
 from src.feature_engineering import FeatureEngineering
 from src.utils.results_saver import ResultsSaver
+from src.Data.data_resampler import DataResampler
 from sklearn.model_selection import TimeSeriesSplit
-from imblearn.over_sampling import SMOTE
 
 
 def train_and_evaluate_model(model_name, X, y, print_report=False, house=None, resident=None):
@@ -158,27 +158,11 @@ def cross_validate_with_smote(
 
     # Apply SMOTE to training data if requested
     if use_smote:
-
-        # Log class distribution before SMOTE
-        before_counts = np.bincount(y_train)
-        logging.info(f"Class distribution before SMOTE: {before_counts}")
-
-        try:
-            # Apply SMOTE
-            logging.info(f"Applying SMOTE with strategy: {sampling_strategy}")
-            smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
-            X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
-
-            # Log class distribution after SMOTE
-            after_counts = np.bincount(y_train_resampled)
-            logging.info(f"Class distribution after SMOTE: {after_counts}")
-            logging.info(f"Original training set size: {len(X_train)} samples")
-            logging.info(f"Resampled training set size: {len(X_train_resampled)} samples")
-
-            # Use resampled data
-            X_train, y_train = X_train_resampled, y_train_resampled
-        except ValueError as e:
-            logging.warning(f"SMOTE failed: {e}. Using original data.")
+        X_train, y_train = DataResampler(X_train, y_train).apply_smote(
+            sampling_strategy=sampling_strategy,
+            random_state=42,
+            k_neighbors=5,
+        )
 
     # For each model, train on one resident and validate on the other
     for model_name in model_names:
@@ -257,7 +241,6 @@ def temporal_cross_validation_with_smote(
     Returns:
         Dictionary of model results
     """
-    from imblearn.over_sampling import SMOTE
 
     log_section("Performing Temporal Cross-Validation with SMOTE")
     results = {}
@@ -287,24 +270,11 @@ def temporal_cross_validation_with_smote(
 
             # Apply SMOTE to the training data only
             if use_smote:
-                # Count class distribution before SMOTE
-                before_counts = np.bincount(y_train)
-                logging.info(f"Class distribution before SMOTE: {before_counts}")
-
-                try:
-                    # Apply SMOTE
-                    smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
-                    X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
-
-                    # Count class distribution after SMOTE
-                    after_counts = np.bincount(y_train_resampled)
-                    logging.info(f"Class distribution after SMOTE: {after_counts}")
-                    logging.info(f"Resampled training set size: {len(X_train_resampled)} samples")
-
-                    # Use the resampled data for training
-                    X_train, y_train = X_train_resampled, y_train_resampled
-                except ValueError as e:
-                    logging.warning(f"SMOTE failed: {e}. Using original data for this fold.")
+                X_train, y_train = DataResampler(X_train, y_train).apply_smote(
+                    sampling_strategy=sampling_strategy,
+                    random_state=42,
+                    k_neighbors=5,
+                )
 
             logging.info(f"Training on {len(X_train)} samples, testing on {len(X_test)} samples")
 
@@ -415,22 +385,34 @@ def main(args):
     }
     log_parameters(parameters)
 
-    # Prepare data
-    if not args.no_training:
-        results = {}
-        if args.training == "default":
-            results = basic_training(
-                args.models,
-                args.resident,
-                args.house,
-                args.data,
-                args.feature_engineering,
-                args.print_report,
-                args.save_models,
-            )
-        elif args.training == "cross_validation":
-            # Perform resident-level cross-validation
-            results = cross_validate_with_smote(
+    results = {}
+    if args.training == "default":
+        results = basic_training(
+            args.models,
+            args.resident,
+            args.house,
+            args.data,
+            args.feature_engineering,
+            args.print_report,
+            args.save_models,
+        )
+    elif args.training == "cross_validation":
+        # Perform resident-level cross-validation
+        results = cross_validate_with_smote(
+            args.models,
+            args.resident,
+            args.house,
+            args.data,
+            args.feature_engineering,
+            args.print_report,
+            args.save_models,
+            use_smote=True,
+            sampling_strategy=args.smote_strategy,
+        )
+    elif args.training == "temporal_cv":
+        # Perform temporal cross-validation
+        if args.use_smote:
+            results = temporal_cross_validation_with_smote(
                 args.models,
                 args.resident,
                 args.house,
@@ -441,21 +423,7 @@ def main(args):
                 use_smote=True,
                 sampling_strategy=args.smote_strategy,
             )
-        elif args.training == "temporal_cv":
-            # Perform temporal cross-validation
-            if args.use_smote:
-                results = temporal_cross_validation_with_smote(
-                    args.models,
-                    args.resident,
-                    args.house,
-                    args.data,
-                    args.feature_engineering,
-                    args.print_report,
-                    args.save_models,
-                    use_smote=True,
-                    sampling_strategy=args.smote_strategy,
-                )
-        print_results(results)
+    print_results(results)
 
 
 if __name__ == "__main__":

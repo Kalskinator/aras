@@ -74,12 +74,6 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        "--no_training",
-        action="store_true",
-        help="Do not train models",
-    )
-
-    parser.add_argument(
         "--training",
         type=str,
         choices=["default", "cross_validation", "temporal_cv"],
