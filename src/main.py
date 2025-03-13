@@ -20,6 +20,8 @@ from src.args import parse_arguments
 from src.Data.data_preprocessor import DataPreprocessor
 from src.feature_engineering import FeatureEngineering
 from src.utils.results_saver import ResultsSaver
+from sklearn.model_selection import TimeSeriesSplit
+from imblearn.over_sampling import SMOTE
 
 
 def train_and_evaluate_model(model_name, X, y, print_report=False, house=None, resident=None):
@@ -28,7 +30,6 @@ def train_and_evaluate_model(model_name, X, y, print_report=False, house=None, r
 
     model = get_model(model_name)
 
-    # Train the model (no progress bar)
     X_train, X_test, y_train, y_test = model.train(X, y)
 
     accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=print_report)
@@ -96,7 +97,7 @@ def basic_training(
     return results
 
 
-def cross_validate_models(
+def cross_validate_with_smote(
     model_names,
     resident,
     house,
@@ -104,6 +105,8 @@ def cross_validate_models(
     feature_engineering=False,
     print_report=False,
     save_models=False,
+    use_smote=False,
+    sampling_strategy="auto",
 ):
     """
     Perform Group K-Fold Cross-Validation with resident-level grouping.
@@ -117,6 +120,8 @@ def cross_validate_models(
         feature_engineering: Whether to use feature engineering
         print_report: Whether to print classification reports
         save_models: Whether to save trained models to disk
+        use_smote: Whether to use SMOTE for oversampling minority classes
+        sampling_strategy: Strategy for SMOTE oversampling
 
     Returns:
         Dictionary of model results
@@ -151,6 +156,30 @@ def cross_validate_models(
             FeatureEngineering.engineer_features,
         )
 
+    # Apply SMOTE to training data if requested
+    if use_smote:
+
+        # Log class distribution before SMOTE
+        before_counts = np.bincount(y_train)
+        logging.info(f"Class distribution before SMOTE: {before_counts}")
+
+        try:
+            # Apply SMOTE
+            logging.info(f"Applying SMOTE with strategy: {sampling_strategy}")
+            smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
+            X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+
+            # Log class distribution after SMOTE
+            after_counts = np.bincount(y_train_resampled)
+            logging.info(f"Class distribution after SMOTE: {after_counts}")
+            logging.info(f"Original training set size: {len(X_train)} samples")
+            logging.info(f"Resampled training set size: {len(X_train_resampled)} samples")
+
+            # Use resampled data
+            X_train, y_train = X_train_resampled, y_train_resampled
+        except ValueError as e:
+            logging.warning(f"SMOTE failed: {e}. Using original data.")
+
     # For each model, train on one resident and validate on the other
     for model_name in model_names:
         log_section(f"Training {model_name} on {resident}'s data...")
@@ -181,7 +210,9 @@ def cross_validate_models(
 
         # Save model if requested
         if save_models:
-            model_suffix = f"{model_name}_{resident}_to_{other_resident}"
+            # Add SMOTE to the model name if it was used
+            smote_suffix = "_smote" if use_smote else ""
+            model_suffix = f"{model_name}_{resident}_to_{other_resident}{smote_suffix}"
             model_dir = os.path.join("src", "artifacts", "models", model_suffix)
             os.makedirs(model_dir, exist_ok=True)
 
@@ -191,6 +222,146 @@ def cross_validate_models(
                 precision=metrics["precision"],
                 recall=metrics["recall"],
                 fscore=metrics["fscore"],
+            )
+
+    return results
+
+
+def temporal_cross_validation_with_smote(
+    model_names,
+    resident,
+    house,
+    data,
+    feature_engineering=False,
+    print_report=False,
+    save_models=False,
+    n_splits=5,
+    use_smote=True,
+    sampling_strategy="auto",  # 'auto', 'minority', 'not majority', 'all', or a dictionary
+):
+    """
+    Perform temporal cross-validation with time-based splits and SMOTE to address class imbalance.
+
+    Args:
+        model_names: List of model names to train
+        resident: The target resident (R1 or R2) for evaluation
+        house: The house (A or B) for data
+        data: The data to use for training and validation
+        feature_engineering: Whether to use feature engineering
+        print_report: Whether to print classification reports
+        save_models: Whether to save trained models to disk
+        n_splits: Number of time-based splits to create
+        use_smote: Whether to use SMOTE for oversampling minority classes
+        sampling_strategy: Strategy for SMOTE oversampling
+
+    Returns:
+        Dictionary of model results
+    """
+    from imblearn.over_sampling import SMOTE
+
+    log_section("Performing Temporal Cross-Validation with SMOTE")
+    results = {}
+
+    logging.info(f"Loading data for resident {resident} from house {house}...")
+    if not feature_engineering:
+        X, y = DataPreprocessor.prepare_data(resident, data, house)
+    else:
+        X, y = DataPreprocessor.prepare_data_with_engineering(
+            resident, data, house, FeatureEngineering.engineer_features
+        )
+
+    # Create time-based folds
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+
+    # For each model, perform cross-validation
+    for model_name in model_names:
+        log_section(f"Training {model_name} with temporal cross-validation and SMOTE")
+        model_metrics = {"accuracy": [], "precision": [], "recall": [], "fscore": []}
+
+        for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
+            logging.info(f"Fold {fold+1}/{n_splits}")
+            X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+            y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+
+            logging.info(f"Original training set size: {len(X_train)} samples")
+
+            # Apply SMOTE to the training data only
+            if use_smote:
+                # Count class distribution before SMOTE
+                before_counts = np.bincount(y_train)
+                logging.info(f"Class distribution before SMOTE: {before_counts}")
+
+                try:
+                    # Apply SMOTE
+                    smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
+                    X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+
+                    # Count class distribution after SMOTE
+                    after_counts = np.bincount(y_train_resampled)
+                    logging.info(f"Class distribution after SMOTE: {after_counts}")
+                    logging.info(f"Resampled training set size: {len(X_train_resampled)} samples")
+
+                    # Use the resampled data for training
+                    X_train, y_train = X_train_resampled, y_train_resampled
+                except ValueError as e:
+                    logging.warning(f"SMOTE failed: {e}. Using original data for this fold.")
+
+            logging.info(f"Training on {len(X_train)} samples, testing on {len(X_test)} samples")
+
+            # Train model
+            model = get_model(model_name)
+            if hasattr(model, "model") and model.model is None:
+                # If the model needs to be initialized
+                # We need to call train but ignore the train/test split it creates
+                _, _, _, _ = model.train(X_train, y_train)
+            else:
+                # If the model is already initialized, just fit it
+                model.model.fit(X_train, y_train)
+
+            # Evaluate (on original test data, never on synthetic data)
+            accuracy, precision, recall, fscore = model.evaluate(
+                X_test, y_test, print_report=print_report
+            )
+
+            # Store results
+            model_metrics["accuracy"].append(accuracy)
+            model_metrics["precision"].append(np.mean(precision))
+            model_metrics["recall"].append(np.mean(recall))
+            model_metrics["fscore"].append(np.mean(fscore))
+
+            logging.info(
+                f"Fold {fold+1} Results - Accuracy: {accuracy:.4f}, F1: {np.mean(fscore):.4f}"
+            )
+
+        # Average results across splits
+        final_metrics = {
+            "accuracy": np.mean(model_metrics["accuracy"]),
+            "precision": np.mean(model_metrics["precision"]),
+            "recall": np.mean(model_metrics["recall"]),
+            "fscore": np.mean(model_metrics["fscore"]),
+        }
+
+        # Log results
+        logging.info(f"Average Results for {model_name}:")
+        logging.info(f"  Accuracy:  {final_metrics['accuracy']:.4f}")
+        logging.info(f"  Precision: {final_metrics['precision']:.4f}")
+        logging.info(f"  Recall:    {final_metrics['recall']:.4f}")
+        logging.info(f"  F1 Score:  {final_metrics['fscore']:.4f}")
+
+        results[model_name] = final_metrics
+
+        # Save model if requested
+        if save_models:
+            model_suffix = f"{model_name}_{resident}_temporal_cv_smote"
+            model_dir = os.path.join("src", "artifacts", "models", model_suffix)
+            os.makedirs(model_dir, exist_ok=True)
+
+            model.save(
+                artifacts_dir=model_dir,
+                accuracy=final_metrics["accuracy"],
+                precision=final_metrics["precision"],
+                recall=final_metrics["recall"],
+                fscore=final_metrics["fscore"],
             )
 
     return results
@@ -259,7 +430,7 @@ def main(args):
             )
         elif args.training == "cross_validation":
             # Perform resident-level cross-validation
-            results = cross_validate_models(
+            results = cross_validate_with_smote(
                 args.models,
                 args.resident,
                 args.house,
@@ -267,7 +438,23 @@ def main(args):
                 args.feature_engineering,
                 args.print_report,
                 args.save_models,
+                use_smote=True,
+                sampling_strategy=args.smote_strategy,
             )
+        elif args.training == "temporal_cv":
+            # Perform temporal cross-validation
+            if args.use_smote:
+                results = temporal_cross_validation_with_smote(
+                    args.models,
+                    args.resident,
+                    args.house,
+                    args.data,
+                    args.feature_engineering,
+                    args.print_report,
+                    args.save_models,
+                    use_smote=True,
+                    sampling_strategy=args.smote_strategy,
+                )
         print_results(results)
 
 
