@@ -35,6 +35,7 @@ def parse_arguments():
 
     # Model selection argument - allows multiple models
     parser.add_argument(
+        "-m",
         "--models",
         nargs="+",
         default=["decision_tree"],
@@ -44,6 +45,7 @@ def parse_arguments():
 
     # Resident selection argument
     parser.add_argument(
+        "-r",
         "--resident",
         type=str,
         default="R1",
@@ -52,6 +54,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "-ho",
         "--house",
         type=str,
         default="A",
@@ -60,6 +63,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "-d",
         "--data",
         type=str,
         default="all",
@@ -68,12 +72,14 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "-f",
         "--feature_engineering",
         action="store_true",
         help="Perform feature engineering",
     )
 
     parser.add_argument(
+        "-t",
         "--training",
         type=str,
         choices=["default", "cross_validation", "temporal_cv"],
@@ -82,35 +88,37 @@ def parse_arguments():
     )
 
     parser.add_argument(
+        "-s",
         "--save_models",
         action="store_true",
         help="Save trained models to disk",
     )
 
-    # Add arguments for time-based split
-    parser.add_argument(
-        "--train_days",
-        type=int,
-        default=7,
-        metavar="N",
-        help="Number of days to use for training",
-    )
-    parser.add_argument(
-        "--val_days",
-        type=int,
-        default=2,
-        metavar="N",
-        help="Number of days to use for validation",
-    )
-    parser.add_argument(
-        "--test_days",
-        type=int,
-        default=2,
-        metavar="N",
-        help="Number of days to use for testing",
-    )
+    # # Add arguments for time-based split
+    # parser.add_argument(
+    #     "--train_days",
+    #     type=int,
+    #     default=7,
+    #     metavar="N",
+    #     help="Number of days to use for training",
+    # )
+    # parser.add_argument(
+    #     "--val_days",
+    #     type=int,
+    #     default=2,
+    #     metavar="N",
+    #     help="Number of days to use for validation",
+    # )
+    # parser.add_argument(
+    #     "--test_days",
+    #     type=int,
+    #     default=2,
+    #     metavar="N",
+    #     help="Number of days to use for testing",
+    # )
 
     parser.add_argument(
+        "-p",
         "--print_report",
         action="store_true",
         help="Print the classification report",
