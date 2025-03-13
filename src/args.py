@@ -82,9 +82,9 @@ def parse_arguments():
     parser.add_argument(
         "--training",
         type=str,
+        choices=["default", "cross_validation", "temporal_cv"],
         default="default",
-        choices=["default", "cross_validation"],
-        help="Training method",
+        help="Training method (default, cross_validation, temporal_cv)",
     )
 
     parser.add_argument(
@@ -126,6 +126,20 @@ def parse_arguments():
         "--debug",
         action="store_true",
         help="Enable debug mode with more verbose logging",
+    )
+
+    parser.add_argument(
+        "--use-smote",
+        action="store_true",
+        help="Use SMOTE for oversampling minority classes",
+    )
+
+    parser.add_argument(
+        "--smote-strategy",
+        type=str,
+        choices=["auto", "minority", "not majority", "all"],
+        default="auto",
+        help="Strategy for SMOTE oversampling",
     )
 
     # Parse arguments
