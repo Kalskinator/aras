@@ -174,7 +174,7 @@ class FeatureEngineering:
         # print("Adding time of day features...")
         # df = FeatureEngineering.add_time_of_day_features(df)
 
-        df.drop(columns=["Time"], inplace=True)
+        # df.drop(columns=["Time"], inplace=True)
 
         # print("Adding time window features...")
         # Add time window features
