@@ -337,6 +337,59 @@ def temporal_cross_validation_with_smote(
     return results
 
 
+# def LSTM_training(
+#     models,
+#     resident,
+#     house,
+#     data,
+#     feature_engineering=False,
+#     print_report=False,
+#     save_models=False,
+# ):
+#     log_section("Training LSTM model")
+#     from src.models.recurrent_neural_network import LSTMModel
+
+#     logging.info(f"Loading data for resident {resident} from house {house}...")
+#     if not feature_engineering:
+#         X, y = DataPreprocessor.prepare_data(resident, data, house)
+#     else:
+#         X, y = DataPreprocessor.prepare_data_with_engineering(
+#             resident, data, house, FeatureEngineering.engineer_features
+#         )
+
+#     input_shape = X.shape
+#     num_classes = len(np.unique(y))
+
+#     # Create the LSTMModel instance rather than the raw LSTMNetwork
+#     model = LSTMModel(input_shape=input_shape, num_classes=num_classes)
+
+#     # Train model
+#     X_train, X_test, y_train, y_test = model.train(
+#         X, y, test_size=0.3, random_state=42, epochs=50, batch_size=32
+#     )
+
+#     # Evaluate model
+#     accuracy, precision, recall, fscore = model.evaluate(X_test, y_test, print_report=print_report)
+
+#     metrics = {
+#         "accuracy": accuracy,
+#         "precision": np.mean(precision),
+#         "recall": np.mean(recall),
+#         "fscore": np.mean(fscore),
+#     }
+
+#     if save_models:
+#         save_model_artifacts(
+#             model,
+#             "lstm",
+#             resident,
+#             metrics,
+#             os.path.join("src", "artifacts", "models"),
+#         )
+
+#     return metrics
+
+
 def save_model_artifacts(model, model_name, resident, metrics, artifacts_dir):
     """Save model and its metrics to disk."""
     model_dir = os.path.join(artifacts_dir, f"{model_name}_{resident}")
@@ -423,6 +476,16 @@ def main(args):
                 use_smote=True,
                 sampling_strategy=args.smote_strategy,
             )
+    # elif args.training == "lstm":
+    #     results = LSTM_training(
+    #         args.models,
+    #         args.resident,
+    #         args.house,
+    #         args.data,
+    #         args.feature_engineering,
+    #         args.print_report,
+    #         args.save_models,
+    #     )
     print_results(results)
 
 
