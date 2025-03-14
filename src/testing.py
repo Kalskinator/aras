@@ -62,7 +62,7 @@ def main():
     logging.info("Loading and preparing data...")
 
     X, y = DataPreprocessor.prepare_data_with_engineering(
-        "R2", "all", "A", FeatureEngineering.engineer_features
+        "R1", "all", "A", FeatureEngineering.engineer_features
     )
 
     # Check current class values
