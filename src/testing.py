@@ -65,25 +65,12 @@ def main():
         "R1", "all", "A", FeatureEngineering.engineer_features
     )
 
-    # Check current class values
-    # (our was not zero-index based and that's why we got the taget x out of bounds)
     unique_classes = sorted(y.unique())
-    logging.info(f"Original unique classes: {unique_classes}")
-
-    # If the minimum class is not 0, shift all classes
-    if min(unique_classes) != 0:
-
-        # Create a mapping from original classes to zero-indexed classes
-        class_mapping = {original: idx for idx, original in enumerate(unique_classes)}
-
-        # Apply the mapping to create zero-indexed classes
-        y = y.map(class_mapping)
-
-        logging.info(f"New unique classes after remapping: {sorted(y.unique())}")
+    logging.debug(f"Original unique classes: {unique_classes}")
 
     # Get correct number of classes (after remapping)
     num_classes = len(y.unique())
-    logging.info(f"Number of unique classes in dataset: {num_classes}")
+    logging.debug(f"Number of unique classes in dataset: {num_classes}")
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42, stratify=y

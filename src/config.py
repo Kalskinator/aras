@@ -89,43 +89,43 @@ ACTIVITY_MAPPING = {
 """
 Map frequent activities to their corresponding categories.
 
-1. Other = Other, Laundry, Cleaning
-2. Sleeping = Sleeping, Napping
-3. Eating = Preparing Breakfast, Having Breakfast, Preparing Lunch, Having Lunch, Preparing Dinner, Having Dinner, Having Snack
-4. Personal Hygiene = Having Shower, Toileting, Brushing Teeth, Shaving, Changing Clothes
-5. Going Out = Going Out
-6. Relaxing = Watching TV, Studying, Using Internet, Reading Book, Talking on the Phone, Talking on Phone, Listening to Music, Having Conversation, Having Guest
+0. Other = Other, Laundry, Cleaning
+1. Sleeping = Sleeping, Napping
+2. Eating = Preparing Breakfast, Having Breakfast, Preparing Lunch, Having Lunch, Preparing Dinner, Having Dinner, Having Snack
+3. Personal Hygiene = Having Shower, Toileting, Brushing Teeth, Shaving, Changing Clothes
+4. Going Out = Going Out
+5. Relaxing = Watching TV, Studying, Using Internet, Reading Book, Talking on the Phone, Talking on Phone, Listening to Music, Having Conversation, Having Guest
 
 
 """
 ACTIVITY_FREQUENT_MAPPING = {
-    1: 1,  # Other
-    2: 5,  # Going Out
-    3: 3,  # Preparing Breakfast -> Eating
-    4: 3,  # Having Breakfast -> Eating
-    5: 3,  # Preparing Lunch -> Eating
-    6: 3,  # Having Lunch -> Eating
-    7: 3,  # Preparing Dinner -> Eating
-    8: 3,  # Having Dinner -> Eating
-    9: 1,  # Washing Dishes -> Other
-    10: 3,  # Having Snack -> Eating
-    11: 2,  # Sleeping
-    12: 6,  # Watching TV -> Relaxing
-    13: 6,  # Studying -> Relaxing
-    14: 4,  # Having Shower -> Personal Hygiene
-    15: 4,  # Toileting -> Personal Hygiene
-    16: 2,  # Napping -> Sleeping
-    17: 6,  # Using Internet -> Relaxing
-    18: 6,  # Reading Book -> Relaxing
-    19: 1,  # Laundry -> Other
-    20: 4,  # Shaving -> Personal Hygiene
-    21: 4,  # Brushing Teeth -> Personal Hygiene
-    22: 6,  # Talking on Phone -> Relaxing
-    23: 6,  # Listening to Music -> Relaxing
-    24: 1,  # Cleaning -> Other
-    25: 6,  # Having Conversation -> Relaxing
-    26: 6,  # Having Guest -> Relaxing
-    27: 4,  # Changing Clothes -> Personal Hygiene
+    1: 0,  # Other
+    2: 4,  # Going Out
+    3: 2,  # Preparing Breakfast -> Eating
+    4: 2,  # Having Breakfast -> Eating
+    5: 2,  # Preparing Lunch -> Eating
+    6: 2,  # Having Lunch -> Eating
+    7: 2,  # Preparing Dinner -> Eating
+    8: 2,  # Having Dinner -> Eating
+    9: 0,  # Washing Dishes -> Other
+    10: 2,  # Having Snack -> Eating
+    11: 1,  # Sleeping
+    12: 5,  # Watching TV -> Relaxing
+    13: 5,  # Studying -> Relaxing
+    14: 3,  # Having Shower -> Personal Hygiene
+    15: 3,  # Toileting -> Personal Hygiene
+    16: 1,  # Napping -> Sleeping
+    17: 5,  # Using Internet -> Relaxing
+    18: 5,  # Reading Book -> Relaxing
+    19: 0,  # Laundry -> Other
+    20: 3,  # Shaving -> Personal Hygiene
+    21: 3,  # Brushing Teeth -> Personal Hygiene
+    22: 5,  # Talking on Phone -> Relaxing
+    23: 5,  # Listening to Music -> Relaxing
+    24: 0,  # Cleaning -> Other
+    25: 5,  # Having Conversation -> Relaxing
+    26: 5,  # Having Guest -> Relaxing
+    27: 3,  # Changing Clothes -> Personal Hygiene
 }
 
 MODEL_CATEGORIES = {
