@@ -15,6 +15,7 @@ from src.feature_engineering import FeatureEngineering
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_recall_fscore_support as score
 
 
 class LSTMNetwork(nn.Module):
@@ -30,11 +31,14 @@ class LSTMNetwork(nn.Module):
             num_layers=2,
             batch_first=True,
             dropout=dropout_rate,
-            bidirectional=False,
         )
 
-        self.fc1 = nn.Linear(128, 64)
-        self.fc2 = nn.Linear(64, num_classes)
+        self.fc1 = nn.Linear(128, 96)
+        self.fc2 = nn.Linear(96, 64)
+        self.fc3 = nn.Linear(64, num_classes)
+
+        # Add dropout which helps prevent overfitting
+        self.dropout = nn.Dropout(dropout_rate)
 
     def forward(self, x):
         # Add sequence dimension if needed [batch, features] -> [batch, 1, features]
@@ -47,9 +51,12 @@ class LSTMNetwork(nn.Module):
         # Get output from last timestep
         x = x[:, -1, :]
 
-        # Process through fully connected layers
+        # Process through fully connected layers with dropout
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.dropout(x)
+        x = F.relu(self.fc2(x))
+        x = self.dropout(x)
+        x = self.fc3(x)
         return x
 
 
@@ -84,22 +91,36 @@ def main():
     model = LSTMNetwork(features=feature_count, num_classes=num_classes)
 
     # Create data loaders with batching
-    batch_size = 64  # Use smaller batches to avoid memory issues
+    batch_size = 64
 
     inputs = torch.tensor(X_train, dtype=torch.float32)
     labels = torch.tensor(y_train.values, dtype=torch.long)
     test_inputs = torch.tensor(X_test, dtype=torch.float32)
     test_labels = torch.tensor(y_test.values, dtype=torch.long)
 
-    train_dataset = TensorDataset(inputs, labels)
-    test_dataset = TensorDataset(test_inputs, test_labels)
+    # Split training data into train and validation (80/20 split)
+    train_size = int(0.8 * len(inputs))
+    train_inputs, val_inputs = inputs[:train_size], inputs[train_size:]
+    train_labels, val_labels = labels[:train_size], labels[train_size:]
+
+    train_dataset = TensorDataset(train_inputs, train_labels)
+    val_dataset = TensorDataset(val_inputs, val_labels)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+    test_dataset = TensorDataset(test_inputs, test_labels)
+
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     # Training setup
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    # Add before training loop:
+    best_loss = float("inf")
+    patience = 10
+    patience_counter = 0
+    best_model_state = None
 
     # Training loop with batches
     num_epochs = 100
@@ -125,6 +146,30 @@ def main():
             avg_loss = epoch_loss / len(train_loader)
             logging.info(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
 
+        # Calculate validation loss
+        model.eval()
+        val_loss = 0
+        with torch.no_grad():
+            for val_X, val_y in val_loader:
+                val_outputs = model(val_X)
+                batch_loss = criterion(val_outputs, val_y)
+                val_loss += batch_loss.item()
+
+        avg_val_loss = val_loss / len(val_loader)
+        logging.info(f"Validation Loss: {avg_val_loss:.4f}")
+
+        # Use validation loss for early stopping
+        if avg_val_loss < best_loss:
+            best_loss = avg_val_loss
+            patience_counter = 0
+            best_model_state = {k: v.cpu().detach() for k, v in model.state_dict().items()}
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                logging.info(f"Early stopping at epoch {epoch+1}")
+                model.load_state_dict(best_model_state)
+                break
+
     # Evaluation
     logging.info("Evaluating model...")
     model.eval()
@@ -139,9 +184,16 @@ def main():
             all_preds.extend(predicted.numpy())
             all_targets.extend(batch_y.numpy())
 
-    # Calculate and report accuracy
+    # Calculate evaluation metrics
     accuracy = accuracy_score(all_targets, all_preds)
-    logging.info(f"Test Accuracy: {accuracy:.4f}")
+    precision, recall, fscore, support = score(all_targets, all_preds, average="weighted")
+
+    # Report summary metrics
+    logging.info("\nLSTM Model Evaluation Results:")
+    logging.info(f"  Accuracy:  {accuracy:.4f}")
+    logging.info(f"  Precision: {np.mean(precision):.4f}")
+    logging.info(f"  Recall:    {np.mean(recall):.4f}")
+    logging.info(f"  F1 Score:  {np.mean(fscore):.4f}")
 
 
 if __name__ == "__main__":
