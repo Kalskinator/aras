@@ -19,7 +19,7 @@ from sklearn.metrics import precision_recall_fscore_support as score
 
 
 class LSTMNetwork(nn.Module):
-    def __init__(self, features, num_classes, dropout_rate=0.2):
+    def __init__(self, features, num_classes, hidden_size=128, dropout_rate=0.2):
         super(LSTMNetwork, self).__init__()
         # Add sequence dimension if data is not sequential
         self.reshape_needed = True
@@ -27,13 +27,13 @@ class LSTMNetwork(nn.Module):
         # Use num_layers=2 to properly apply dropout between layers
         self.lstm = nn.LSTM(
             input_size=features,
-            hidden_size=128,
+            hidden_size=hidden_size,
             num_layers=2,
             batch_first=True,
             dropout=dropout_rate,
         )
 
-        self.fc1 = nn.Linear(128, 96)
+        self.fc1 = nn.Linear(hidden_size, 96)
         self.fc2 = nn.Linear(96, 64)
         self.fc3 = nn.Linear(64, num_classes)
 
@@ -66,8 +66,11 @@ def setup_logging():
 
 def main():
     setup_logging()
-    logging.info("Loading and preparing data...")
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    logging.info(f"Using device: {device}")
+
+    logging.info("Loading and preparing data...")
     X, y = DataPreprocessor.prepare_data_with_engineering(
         "R1", "all", "A", FeatureEngineering.engineer_features
     )
@@ -89,6 +92,8 @@ def main():
 
     feature_count = X_train.shape[1]
     model = LSTMNetwork(features=feature_count, num_classes=num_classes)
+    # Move model to GPU/CPU
+    model = model.to(device)
 
     # Create data loaders with batching
     batch_size = 64
@@ -116,7 +121,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # Add before training loop:
+    # Early stopping setup
     best_loss = float("inf")
     patience = 10
     patience_counter = 0
@@ -131,6 +136,10 @@ def main():
         epoch_loss = 0
 
         for batch_X, batch_y in train_loader:
+            # Move data to device
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+
             # Forward pass
             optimizer.zero_grad()
             outputs = model(batch_X)
@@ -151,6 +160,10 @@ def main():
         val_loss = 0
         with torch.no_grad():
             for val_X, val_y in val_loader:
+                # Move validation data to device
+                val_X = val_X.to(device)
+                val_y = val_y.to(device)
+
                 val_outputs = model(val_X)
                 batch_loss = criterion(val_outputs, val_y)
                 val_loss += batch_loss.item()
@@ -167,7 +180,8 @@ def main():
             patience_counter += 1
             if patience_counter >= patience:
                 logging.info(f"Early stopping at epoch {epoch+1}")
-                model.load_state_dict(best_model_state)
+                # Load the best model (converting back to device)
+                model.load_state_dict({k: v.to(device) for k, v in best_model_state.items()})
                 break
 
     # Evaluation
@@ -178,11 +192,16 @@ def main():
 
     with torch.no_grad():
         for batch_X, batch_y in test_loader:
+            # Move test data to device
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+
             outputs = model(batch_X)
             _, predicted = torch.max(outputs.data, 1)
 
-            all_preds.extend(predicted.numpy())
-            all_targets.extend(batch_y.numpy())
+            # Move predictions and targets back to CPU for evaluation
+            all_preds.extend(predicted.cpu().numpy())
+            all_targets.extend(batch_y.cpu().numpy())
 
     # Calculate evaluation metrics
     accuracy = accuracy_score(all_targets, all_preds)

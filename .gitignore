@@ -178,3 +178,5 @@ artifacts/
 catboost_info/
 logs/
 Model_Results/
+results/lstm_hyperparameter_results_20250320_172044.csv
+results/best_lstm_config_20250320_172044.txt
