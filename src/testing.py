@@ -67,7 +67,7 @@ def setup_logging():
 def main():
     setup_logging()
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"Using device: {device}")
 
     logging.info("Loading and preparing data...")
